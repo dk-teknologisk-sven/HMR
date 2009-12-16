@@ -130,7 +130,11 @@
     # Betinget gittersøgning
     dum<-1:length(vMSE); ok<-dum[vcol==3]; bmin.vMSE<-min(vMSE[ok])
     kand<-dum[ok][vMSE[ok]<=bmin.vMSE]
-    if (length(kand)>1) {big<-sample(x=kand,size=1)} else {big<-kand}
+    if (length(kand)>1)
+    {
+      # Best-in-grid estimatet er ikke entydigt bestemt; vælger største (~No flux) eller mindste (~LR) kandidat
+      if (abs(vMSE[ok][1]-bmin.vMSE)<abs(vMSE[ok][length(vMSE[ok])]-bmin.vMSE)) {big<-kand[1]} else {big<-kand[length(kand)]}
+    } else {big<-kand}
     logkappa.big<-logkappa[big]
     MSE.big<-MSE(logkappa.big)
     # Betinget optimering
