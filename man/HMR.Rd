@@ -1,11 +1,11 @@
 \name{HMR}
-\Rdversion{0.1.1}
+\Rdversion{0.2.0}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon-separated file, and then processes each data series by recommending a
 specific data analysis and performing the user selected analysis. Finally, it exports the results to a semicolon-separated file.}
-\usage{HMR(filename, series = NA, dec = '.', JPG = FALSE, PS = FALSE,
-PHMR = FALSE, npred = 500, LR.always = FALSE, ngrid = 1000)}
+\usage{HMR(filename, series = NA, dec = '.', JPG = FALSE, PS = FALSE, PHMR = FALSE,
+npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
 \arguments{
   \item{filename}{The name of a HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
   command, e.g. \code{setwd('C:/My HMR applications')}, or through the 'File|Change dir...' menu. The required fixed format of HMR
@@ -28,6 +28,8 @@ PHMR = FALSE, npred = 500, LR.always = FALSE, ngrid = 1000)}
   \code{npred=500}.}
   \item{LR.always}{A logical indicating whether data series should be analysed by linear regression in addition to the user selected
   analysis. The default is \code{LR.always=FALSE}.}
+  \item{FollowHMR}{A logical indicating whether to select the data analysis recommended by HMR in all cases. This cancels all plotting.
+  The default is \code{FollowHMR=FALSE}.}
   \item{ngrid}{The number of grid-points in the initial grid search of the minimum of the criterion function. It must be at least 100,
   and the default is \code{ngrid=1000}.} 
 }

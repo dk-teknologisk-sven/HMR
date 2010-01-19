@@ -1,10 +1,10 @@
-HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500,LR.always=FALSE,ngrid=1000)
+HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500,LR.always=FALSE,FollowHMR=FALSE,ngrid=1000)
 {
   ## Input
   ## -----
   ## filename : En tekststreng indeholdende filnavnet. Det forudsættes, at datamappen i forvejen er sat med "setwd".
   ##            Outputtet fra HMR gemmes i en tekstfil med 'HMR - ' foranstillet.
-  ## series   : En vektor indeholdende navnene på de serier i datafilen, for hvilke der ønskes en HMR-analysef. Hvis "series=NA",
+  ## series   : En vektor indeholdende navnene på de serier i datafilen, for hvilke der ønskes en HMR-analyse. Hvis "series=NA",
   ##            eller "series" indeholder et "NA", analyseres hele datafilen.
   ## dec      : Decimaltegn på datafilen, '.' eller ','.
   ## JPG      : Skal plottene med modelfit eksporteres som jpg-filer? Default: FALSE.
@@ -14,6 +14,7 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
   ##            datafilens navn med 'PHMR - ' foranstillet. Default: FALSE.
   ## npred    : Se beskrivelsen af "PHMR". Default: 500.
   ## LR.always: Hvis TRUE, udføres altid LR i tilføjelse til den analyse, brugeren har valgt. Default: FALSE.
+  ## FollowHMR: Hvis TRUE, annulleres brugerens valg af analyse, og HMR's anbefalinger følges. Default: FALSE.
   ## ngrid    : Antal punkter i gittersøgninger. Skal være mindst 100. Default: 1000.
   
   ## Parametre - man pt. ikke kan ændre
@@ -56,7 +57,7 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
   ##   3. "dec" skal være "." eller ",".
   ##   4. "sep" skal være ";" eller ":". 
   ##   5. "ngrid" og "npred" skal være heltal, og "ngrid" skal være mindst 100.
-  ##   6. "LR.always", "JPG", "PS" og "PHMR" skal være "TRUE" eller "FALSE".
+  ##   6. "LR.always", "JPG", "PS", "PHMR" og "FollowHMR" skal være "TRUE" eller "FALSE".
   ##   7. "xtxt" og "ytxt" skal bare ikke være "NULL".
 
   # Kontrollerer "filename"
@@ -77,8 +78,8 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
             # Kontrollerer "ngrid" og "npred" - 2. gang
             if (!((xOK(ngrid))&(ngrid>=100)&(ngrid==floor(ngrid))&(ngrid==ceiling(ngrid))&(xOK(npred))&(npred>0)&(npred==floor(npred))&(npred==ceiling(npred)))) {FATAL<-TRUE} else
             {
-              # Kontrollerer "LR.always", "JPG" og "PS"
-              if (!(is.logical(PHMR)&is.logical(LR.always)&is.logical(JPG)&is.logical(PS))) {FATAL<-TRUE} else
+              # Kontrollerer "LR.always", "JPG", "PS", "PHMR" og "FollowHMR"
+              if (!(is.logical(FollowHMR)&is.logical(PHMR)&is.logical(LR.always)&is.logical(JPG)&is.logical(PS))) {FATAL<-TRUE} else
               {
                 # Kontrollerer "xtxt" og "ytxt"
                 if (is.null(xtxt)|is.null(ytxt)) {FATAL<-TRUE} else
@@ -159,7 +160,7 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
           # Dataanalyse
           {
             oHMR<-.HMR.fit1(tid=HMRdata[[i]]$tid,konc=HMRdata[[i]]$konc,A=HMRdata[[i]]$A,V=HMRdata[[i]]$V,serie=HMRdata[[i]]$serie,
-            ngrid=ngrid,LR.always=LR.always,JPG=JPG,PS=PS,PHMR=PHMR,npred=npred,xtxt=paste(xtxt),ytxt=paste(ytxt),
+            ngrid=ngrid,LR.always=LR.always,FollowHMR=FollowHMR,JPG=JPG,PS=PS,PHMR=PHMR,npred=npred,xtxt=paste(xtxt),ytxt=paste(ytxt),
             pcttxt=paste(' (',round(100*i/nserie,0),'%)',sep=''),MSE.zero=MSE.zero,bracketing.tol=bracketing.tol,bracketing.maxiter=bracketing.maxiter)
             if (LR.always)
               OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,mysprintf(oHMR$f0),mysprintf(oHMR$f0.se),mysprintf(oHMR$f0.p),mysprintf(oHMR$f0.lo95),mysprintf(oHMR$f0.up95),oHMR$method,oHMR$warning,

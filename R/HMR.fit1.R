@@ -1,4 +1,4 @@
-.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,LR.always,JPG,PS,PHMR,npred,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter)
+.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,LR.always,FollowHMR,JPG,PS,PHMR,npred,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter)
 {
   ### Stikprøvestørrelse
   n<-length(konc)
@@ -172,127 +172,141 @@
       if (EST[1]>0) {maintext<-'LR'} else {maintext<-'HMR'}
     }
     if ((vMSE[vcol==3][length(vMSE[vcol==3])]-MSE.big)<=MSE.zero) {maintext<-'No flux/LR'}
-    # Valg af analyse foretages af brugeren
-    options(warn=-1)
-    par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
-    plot(logkappa,vMSE,type='p',pch=16,col=vcol,xlab=expression(paste('Log(',kappa,')',sep='')),
-    ylab='MSE',main='MSE criterion')
-    points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
-    lo<-max(logkappa.opt-log(2),log(ramme$kappa.lo))
-    up<-min(logkappa.opt+log(2),log(ramme$kappa.up))
-    x<-logkappa[(logkappa>=lo)&(logkappa<=up)]
-    if (length(x)>0)
-    {
-      y<-vMSE[(logkappa>=lo)&(logkappa<=up)]
-      plot(x,y,type='p',pch=16,col=vcol[(logkappa>=lo)&(logkappa<=up)],xlab=expression(paste('Log(',kappa,')',sep='')),
-      ylab='MSE',main='MSE criterion - zoom on HMR optimum')
-      points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
+    # Valg af analyse
+    if (FollowHMR)
+    { # Bare kør løs!
+      if (maintext=='HMR') {dacode<-1} else
+        if (maintext=='LR') {dacode<-2} else {dacode<-3}
     } else
-    {
-      plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum')
-      lines(c(0,1),c(0,0),lty=1,lwd=1,col=1)
-      lines(c(0,1),c(1,1),lty=1,lwd=1,col=1)
-      lines(c(0,0),c(0,1),lty=1,lwd=1,col=1)
-      lines(c(1,1),c(0,1),lty=1,lwd=1,col=1)
-      text(0.5,0.5,'Too few grid-points!',adj=0.5,col=2)
-    }
-    plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('Recommendation: ',maintext,sep=''))
-    ptid<-seq(0,max(tid),l=npred)
-    kappa<-exp(logkappa.opt); EST<-MSE.list(logkappa.opt); phi<-EST$phi; f0<-EST$f0
-    x<-exp(-kappa*ptid)/(-kappa*h); pkonc.HMR<-phi+f0*x
-    EST<-as.numeric(lsfit(tid,konc)$coef)
-    pkonc.LR<-EST[1]+EST[2]*ptid
-    pkonc.NE<-rep(mean(konc),length(ptid))
-    lines(ptid,pkonc.HMR,lty=1,col=4)
-    lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-    lines(ptid,pkonc.NE,lty=2,col=1)
-    legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
-    plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='')
-    polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.7,0.9,0.9,0.7,0.7),density=-1,col=4,border=1,lty=1,lwd=1)
-    text(0.275,0.8,'HMR',adj=0.5,col=colors()[1],cex=1.5)
-    polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.4,0.6,0.6,0.4,0.4),density=-1,col=colors()[498],border=1,lty=1,lwd=1)
-    text(0.275,0.5,'LR',adj=0.5,col=1,cex=1.5)
-    polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=1,border=1,lty=1,lwd=1)
-    text(0.275,0.2,'No flux',adj=0.5,col=colors()[1],cex=1.5)
-    polygon(c(0.55,0.55,0.9,0.9,0.55),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=2,border=1,lty=1,lwd=1)
-    text(0.725,0.2,'CANCEL',adj=0.5,col=colors()[1],cex=1.5)
-    mtext(paste('Data series: ',serie,pcttxt,sep=''),side=3,line=0,outer=TRUE,cex=1.5)
-    VALGT<-FALSE
-    while (!VALGT)
-    {
-      pkt<-locator(1)
-      if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.7)&(pkt[2]<=0.9)) {dacode<-1; VALGT<-TRUE} # HMR
-      if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.4)&(pkt[2]<=0.6)) {dacode<-2; VALGT<-TRUE} # LR
-      if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-3; VALGT<-TRUE} # No flux
-      if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
-    }
-    options(warn=0)
-    # JPG, PS
-    dum<-c(JPG,PS)
-    for (fig in 1:2)
-      if (dum[fig])
+    { # Valg af analyse foretages af brugeren
+      options(warn=-1)
+      par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+      plot(logkappa,vMSE,type='p',pch=16,col=vcol,xlab=expression(paste('Log(',kappa,')',sep='')),
+      ylab='MSE',main='MSE criterion')
+      points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
+      lo<-max(logkappa.opt-log(2),log(ramme$kappa.lo))
+      up<-min(logkappa.opt+log(2),log(ramme$kappa.up))
+      x<-logkappa[(logkappa>=lo)&(logkappa<=up)]
+      if (length(x)>0)
       {
-        if (fig==1)
-          jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
-        else
-          postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
-        par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-        plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': ',maintext,sep=''))
-        lines(ptid,pkonc.HMR,lty=1,col=4)
-        lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-        lines(ptid,pkonc.NE,lty=2,col=1)
-        legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
-        dev.off()
-        par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+        y<-vMSE[(logkappa>=lo)&(logkappa<=up)]
+        plot(x,y,type='p',pch=16,col=vcol[(logkappa>=lo)&(logkappa<=up)],xlab=expression(paste('Log(',kappa,')',sep='')),
+        ylab='MSE',main='MSE criterion - zoom on HMR optimum')
+        points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
+      } else
+      {
+        plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum')
+        lines(c(0,1),c(0,0),lty=1,lwd=1,col=1)
+        lines(c(0,1),c(1,1),lty=1,lwd=1,col=1)
+        lines(c(0,0),c(0,1),lty=1,lwd=1,col=1)
+        lines(c(1,1),c(0,1),lty=1,lwd=1,col=1)
+        text(0.5,0.5,'Too few grid-points!',adj=0.5,col=2)
       }
+      plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('Recommendation: ',maintext,sep=''))
+      ptid<-seq(0,max(tid),l=npred)
+      kappa<-exp(logkappa.opt); EST<-MSE.list(logkappa.opt); phi<-EST$phi; f0<-EST$f0
+      x<-exp(-kappa*ptid)/(-kappa*h); pkonc.HMR<-phi+f0*x
+      EST<-as.numeric(lsfit(tid,konc)$coef)
+      pkonc.LR<-EST[1]+EST[2]*ptid
+      pkonc.NE<-rep(mean(konc),length(ptid))
+      lines(ptid,pkonc.HMR,lty=1,col=4)
+      lines(ptid,pkonc.LR,lty=1,col=colors()[498])
+      lines(ptid,pkonc.NE,lty=2,col=1)
+      legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
+      plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='')
+      polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.7,0.9,0.9,0.7,0.7),density=-1,col=4,border=1,lty=1,lwd=1)
+      text(0.275,0.8,'HMR',adj=0.5,col=colors()[1],cex=1.5)
+      polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.4,0.6,0.6,0.4,0.4),density=-1,col=colors()[498],border=1,lty=1,lwd=1)
+      text(0.275,0.5,'LR',adj=0.5,col=1,cex=1.5)
+      polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=1,border=1,lty=1,lwd=1)
+      text(0.275,0.2,'No flux',adj=0.5,col=colors()[1],cex=1.5)
+      polygon(c(0.55,0.55,0.9,0.9,0.55),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=2,border=1,lty=1,lwd=1)
+      text(0.725,0.2,'CANCEL',adj=0.5,col=colors()[1],cex=1.5)
+      mtext(paste('Data series: ',serie,pcttxt,sep=''),side=3,line=0,outer=TRUE,cex=1.5)
+      VALGT<-FALSE
+      while (!VALGT)
+      {
+        pkt<-locator(1)
+        if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.7)&(pkt[2]<=0.9)) {dacode<-1; VALGT<-TRUE} # HMR
+        if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.4)&(pkt[2]<=0.6)) {dacode<-2; VALGT<-TRUE} # LR
+        if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-3; VALGT<-TRUE} # No flux
+        if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
+      }
+      options(warn=0)
+      # JPG, PS
+      dum<-c(JPG,PS)
+      for (fig in 1:2)
+        if (dum[fig])
+        {
+          if (fig==1)
+            jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
+          else
+            postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
+          par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
+          plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': ',maintext,sep=''))
+          lines(ptid,pkonc.HMR,lty=1,col=4)
+          lines(ptid,pkonc.LR,lty=1,col=colors()[498])
+          lines(ptid,pkonc.NE,lty=2,col=1)
+          legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
+          dev.off()
+          par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+        }
+    }
   } else
   # Hvis HMR ikke kan anvendes
   {
-    pframe<-function() {lines(c(0,1),c(0,0),lty=1,lwd=2,col=1); lines(c(0,1),c(1,1),lty=1,lwd=2,col=1); lines(c(0,0),c(0,1),lty=1,lwd=2,col=1); lines(c(1,1),c(0,1),lty=1,lwd=2,col=1)}
-    par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
-    plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion'); pframe()
-    plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum'); pframe()
-    plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')
-    ptid<-seq(0,max(tid),l=npred)
-    EST<-as.numeric(lsfit(tid,konc)$coef)
-    pkonc.LR<-EST[1]+EST[2]*ptid
-    pkonc.NE<-rep(mean(konc),length(ptid))
-    lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-    lines(ptid,pkonc.NE,lty=2,col=1)
-    legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))
-    plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='')
-    polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.4,0.6,0.6,0.4,0.4),density=-1,col=colors()[498],border=1,lty=1,lwd=1)
-    text(0.275,0.5,'LR',adj=0.5,col=1,cex=1.5)
-    polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=1,border=1,lty=1,lwd=1)
-    text(0.275,0.2,'No flux',adj=0.5,col=colors()[1],cex=1.5)
-    polygon(c(0.55,0.55,0.9,0.9,0.55),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=2,border=1,lty=1,lwd=1)
-    text(0.725,0.2,'CANCEL',adj=0.5,col=colors()[1],cex=1.5)
-    mtext(paste('Data series: ',serie,pcttxt,sep=''),side=3,line=0,outer=TRUE,cex=1.5)
-    VALGT<-FALSE
-    while (!VALGT)
-    {
-      pkt<-locator(1)
-      if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.4)&(pkt[2]<=0.6)) {dacode<-2; VALGT<-TRUE} # LR
-      if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-3; VALGT<-TRUE} # No flux
-      if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
-    }
-    # JPG, PS
-    dum<-c(JPG,PS)
-    for (fig in 1:2)
-      if (dum[fig])
+    # Valg af analyse
+    if (FollowHMR)
+    { # Bare kør løs!
+      if (maintext=='LR') {dacode<-2} else {dacode<-3}
+    } else
+    { # Valg af analyse foretages af brugeren
+      pframe<-function() {lines(c(0,1),c(0,0),lty=1,lwd=2,col=1); lines(c(0,1),c(1,1),lty=1,lwd=2,col=1); lines(c(0,0),c(0,1),lty=1,lwd=2,col=1); lines(c(1,1),c(0,1),lty=1,lwd=2,col=1)}
+      par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+      plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion'); pframe()
+      plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum'); pframe()
+      plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')
+      ptid<-seq(0,max(tid),l=npred)
+      EST<-as.numeric(lsfit(tid,konc)$coef)
+      pkonc.LR<-EST[1]+EST[2]*ptid
+      pkonc.NE<-rep(mean(konc),length(ptid))
+      lines(ptid,pkonc.LR,lty=1,col=colors()[498])
+      lines(ptid,pkonc.NE,lty=2,col=1)
+      legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))
+      plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='')
+      polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.4,0.6,0.6,0.4,0.4),density=-1,col=colors()[498],border=1,lty=1,lwd=1)
+      text(0.275,0.5,'LR',adj=0.5,col=1,cex=1.5)
+      polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=1,border=1,lty=1,lwd=1)
+      text(0.275,0.2,'No flux',adj=0.5,col=colors()[1],cex=1.5)
+      polygon(c(0.55,0.55,0.9,0.9,0.55),c(0.1,0.3,0.3,0.1,0.1),density=-1,col=2,border=1,lty=1,lwd=1)
+      text(0.725,0.2,'CANCEL',adj=0.5,col=colors()[1],cex=1.5)
+      mtext(paste('Data series: ',serie,pcttxt,sep=''),side=3,line=0,outer=TRUE,cex=1.5)
+      VALGT<-FALSE
+      while (!VALGT)
       {
-        if (fig==1)
-          jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
-        else
-          postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
-        par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-        plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': HMR could not be applied',sep=''))
-        lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-        lines(ptid,pkonc.NE,lty=2,col=1)
-        legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))
-        dev.off()
-        par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+        pkt<-locator(1)
+        if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.4)&(pkt[2]<=0.6)) {dacode<-2; VALGT<-TRUE} # LR
+        if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-3; VALGT<-TRUE} # No flux
+        if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
       }
+      # JPG, PS
+      dum<-c(JPG,PS)
+      for (fig in 1:2)
+        if (dum[fig])
+        {
+          if (fig==1)
+            jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
+          else
+            postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
+          par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
+          plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': HMR could not be applied',sep=''))
+          lines(ptid,pkonc.LR,lty=1,col=colors()[498])
+          lines(ptid,pkonc.NE,lty=2,col=1)
+          legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))
+          dev.off()
+          par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
+        }
+    }
   }
 
   ### Datanalyse
@@ -311,8 +325,8 @@
       if (PHMR) {PHMR.ptid<-seq(0,max(tid),l=npred); PHMR.pkonc<-phi+f0.est*(exp(-kappa*PHMR.ptid)/(-kappa*h))}
       f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
       fraktil<-qt(p=0.975,df=n-2)
-      f0.lo95<-f0-fraktil*f0.se
-      f0.up95<-f0+fraktil*f0.se
+      f0.lo95<-f0.est-fraktil*f0.se
+      f0.up95<-f0.est+fraktil*f0.se
       method<-'HMR'
       advarsel<-'None'
     } else
