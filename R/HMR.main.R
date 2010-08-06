@@ -1,4 +1,4 @@
-HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500,LR.always=FALSE,FollowHMR=FALSE,ngrid=1000)
+HMR<-function(filename,series=NA,dec='.',sep=';',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500,LR.always=FALSE,FollowHMR=FALSE,ngrid=1000)
 {
   ## Input
   ## -----
@@ -6,7 +6,8 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
   ##            Outputtet fra HMR gemmes i en tekstfil med 'HMR - ' foranstillet.
   ## series   : En vektor indeholdende navnene på de serier i datafilen, for hvilke der ønskes en HMR-analyse. Hvis "series=NA",
   ##            eller "series" indeholder et "NA", analyseres hele datafilen.
-  ## dec      : Decimaltegn på datafilen, '.' eller ','.
+  ## dec      : Decimaltegn på datafilen, '.' eller ','. Default: '.'.
+  ## sep      : Kolonneseparatoren på datafilen, ';' eller ','. Default: ';'.
   ## JPG      : Skal plottene med modelfit eksporteres som jpg-filer? Default: FALSE.
   ## PS       : Skal plottene med modelfit eksporteres som ps-filer? Default: FALSE.
   ## PHMR     : Hvis TRUE, udskrives "npred" prædikterede værdier til en CSV-fil, for de dataserier hvor brugeren har valgt
@@ -30,7 +31,6 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
   bracketing.maxiter<-1000
   xtxt<-'Time since deployment'
   ytxt<-'Chamber concentration'
-  sep<-';'
 
   ## Funktion til tjek for "NA", "-Inf" eller "Inf" i talvektorer
   xOK<-function(x) # Returnerer "TRUE", hvis "x" ikke indeholder "NA", "-Inf" eller "Inf"; ellers "FALSE"
@@ -55,10 +55,11 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
   ##   1. "filename" skal være en tekststreng af længde én. Om den peger på en eksisterende fil, overlades til R.
   ##   2. "series" skal være en ikke-tom tekststreng eller "NA".
   ##   3. "dec" skal være "." eller ",".
-  ##   4. "sep" skal være ";" eller ":". 
-  ##   5. "ngrid" og "npred" skal være heltal, og "ngrid" skal være mindst 100.
-  ##   6. "LR.always", "JPG", "PS", "PHMR" og "FollowHMR" skal være "TRUE" eller "FALSE".
-  ##   7. "xtxt" og "ytxt" skal bare ikke være "NULL".
+  ##   4. "sep" skal være ";" eller ",". 
+  ##   5. "dec" og "sep" må ikke begge være ",".
+  ##   6. "ngrid" og "npred" skal være heltal, og "ngrid" skal være mindst 100.
+  ##   7. "LR.always", "JPG", "PS", "PHMR" og "FollowHMR" skal være "TRUE" eller "FALSE".
+  ##   8. "xtxt" og "ytxt" skal bare ikke være "NULL".
 
   # Kontrollerer "filename"
   if ((length(filename)!=1)|(!is.character(filename))) {FATAL<-TRUE} else
@@ -70,22 +71,26 @@ HMR<-function(filename,series=NA,dec='.',JPG=FALSE,PS=FALSE,PHMR=FALSE,npred=500
       if (!((is.character(dec))&(length(dec)==1)&(is.character(sep))&(length(sep)==1))) {FATAL<-TRUE} else
       {
         # Kontrollerer "dec" og "sep" - 2. gang
-        if (!(((dec=='.')|(dec==','))&((sep==';')|(sep==':')))) {FATAL<-TRUE} else
+        if (!(((dec=='.')|(dec==','))&((sep==';')|(sep==',')))) {FATAL<-TRUE} else
         {
-          # Kontrollerer "ngrid" og "npred" - 1. gang
-          if (!(is.numeric(ngrid)&(length(ngrid)==1)&is.numeric(npred)&(length(npred)==1))) {FATAL<-TRUE} else
+          # Kontrollerer "dec" og "sep" - 3. gang
+          if ((dec==',')&(sep==',')) {FATAL<-TRUE} else
           {
-            # Kontrollerer "ngrid" og "npred" - 2. gang
-            if (!((xOK(ngrid))&(ngrid>=100)&(ngrid==floor(ngrid))&(ngrid==ceiling(ngrid))&(xOK(npred))&(npred>0)&(npred==floor(npred))&(npred==ceiling(npred)))) {FATAL<-TRUE} else
+            # Kontrollerer "ngrid" og "npred" - 1. gang
+            if (!(is.numeric(ngrid)&(length(ngrid)==1)&is.numeric(npred)&(length(npred)==1))) {FATAL<-TRUE} else
             {
-              # Kontrollerer "LR.always", "JPG", "PS", "PHMR" og "FollowHMR"
-              if (!(is.logical(FollowHMR)&is.logical(PHMR)&is.logical(LR.always)&is.logical(JPG)&is.logical(PS))) {FATAL<-TRUE} else
+              # Kontrollerer "ngrid" og "npred" - 2. gang
+              if (!((xOK(ngrid))&(ngrid>=100)&(ngrid==floor(ngrid))&(ngrid==ceiling(ngrid))&(xOK(npred))&(npred>0)&(npred==floor(npred))&(npred==ceiling(npred)))) {FATAL<-TRUE} else
               {
-                # Kontrollerer "xtxt" og "ytxt"
-                if (is.null(xtxt)|is.null(ytxt)) {FATAL<-TRUE} else
+                # Kontrollerer "LR.always", "JPG", "PS", "PHMR" og "FollowHMR"
+                if (!(is.logical(FollowHMR)&is.logical(PHMR)&is.logical(LR.always)&is.logical(JPG)&is.logical(PS))) {FATAL<-TRUE} else
                 {
-                  # Input-parametre er OK!
-                  FATAL<-FALSE
+                  # Kontrollerer "xtxt" og "ytxt"
+                  if (is.null(xtxt)|is.null(ytxt)) {FATAL<-TRUE} else
+                  {
+                    # Input-parametre er OK!
+                    FATAL<-FALSE
+                  }
                 }
               }
             }

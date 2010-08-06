@@ -1,29 +1,32 @@
 \name{HMR}
-\Rdversion{0.2.0}
+\Rdversion{0.2.1}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
-\description{HMR reads static chamber data from a semicolon-separated file, and then processes each data series by recommending a
-specific data analysis and performing the user selected analysis. Finally, it exports the results to a semicolon-separated file.}
-\usage{HMR(filename, series = NA, dec = '.', JPG = FALSE, PS = FALSE, PHMR = FALSE,
-npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
+\description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
+by recommending a specific data analysis and performing the user selected analysis. Finally, it exports the results to a
+semicolon- or comma-separated file.}
+\usage{HMR(filename, series = NA, dec = '.', sep = ';', JPG = FALSE, PS = FALSE,
+PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
 \arguments{
   \item{filename}{The name of a HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
   command, e.g. \code{setwd('C:/My HMR applications')}, or through the 'File|Change dir...' menu. The required fixed format of HMR
   data files is described in the details section below.}
   \item{series}{Data series in the data file for which analysis is requested. The default \code{series=NA} requests analysis of all
   available data series, whereas for example \code{series=c('k0a','k0d')} only requests analysis of the series named \code{k0a} and
-  \code{k0d}, cf.\ the sample data in the details section below.}
+  \code{k0d}, cf. the sample data in the details section below.}
   \item{dec}{The decimal separator used in the data file. The options are \code{dec='.'} and \code{dec=','}, and the default is
   \code{dec='.'}.}
+  \item{sep}{The column separator used in the data file. The options are \code{sep=';'} and \code{sep=','}, and the default is
+  \code{sep=';'}.}
   \item{JPG}{A logical indicating whether plots of the model fits should be exported as JPG-files. A plot is exported for each
   analysed data series, and the files are named after the data series and located in the data file folder. The default is
   \code{JPG=FALSE}.}
   \item{PS}{A logical indicating whether plots of the model fits should be exported as postscript files. A plot is exported for each
   analysed data series, and the files are named after the data series and located in the data file folder. The default is
   \code{PS=FALSE}.}
-  \item{PHMR}{A logical indicating whether model predicted values should be exported to a semicolon-separated file for data series
-  for which non-linear modeling is selected. The file is located in the data file folder and named after the data file preceded by
-  'PHMR - '. The default is \code{PHMR=FALSE}.}
+  \item{PHMR}{A logical indicating whether model predicted values should be exported to a file for data series for which non-linear
+  modeling is selected. The export file is column separated like the data file and it is located in the data file folder and named after
+  the data file preceded by 'PHMR - '. The default is \code{PHMR=FALSE}.}
   \item{npred}{If \code{PHMR=TRUE} (see above), \code{npred} model predicted values are exported for each data series. The default is
   \code{npred=500}.}
   \item{LR.always}{A logical indicating whether data series should be analysed by linear regression in addition to the user selected
@@ -33,10 +36,10 @@ npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
   \item{ngrid}{The number of grid-points in the initial grid search of the minimum of the criterion function. It must be at least 100,
   and the default is \code{ngrid=1000}.} 
 }
-\details{HMR data files must be semicolon-separated files organised in five columns containing data series names, chamber volumes,
-chamber cross-sectional areas, observation time-points, and the observed chamber concentrations. Semicolon-separated files may
-be edited by text editors or spreadsheet software. The following 45 lines constitute an example of a HMR data file containing five
-data series of static chamber data:
+\details{HMR data files must be semicolon- or comma-separated files organised in five columns containing data series names, chamber
+volumes, chamber cross-sectional areas, observation time-points, and the observed chamber concentrations. Semicolon- and comma-separated
+files may be edited by text editors or spreadsheet software. The following 45 lines constitute an example of a HMR data file containing
+five data series of static chamber data:
 
 \preformatted{
 Series;V;A;Time;Concentration
@@ -109,11 +112,11 @@ There are no requirements regarding the units of input data. The chosen units do
 has the same unit as \eqn{(VC)/ (At)}, where \eqn{t} and \eqn{C} denote, respectively, time and concentration. Some examples:
 
 \itemize{
-\item{-}{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{h}], \eqn{C} in [\eqn{\mu g/L}]:
+\item{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{h}], \eqn{C} in [\eqn{\mu g/L}]:
 The flux unit is [\eqn{\mu g/m^2/h}].}
-\item{-}{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{min.}], \eqn{C} in [\eqn{ppmv=\mu L/L}]:
+\item{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{min.}], \eqn{C} in [\eqn{ppmv=\mu L/L}]:
 The flux unit is [\eqn{\mu L/m^2/min.}].}
-\item{-}{\eqn{V} in [\eqn{m^3}], \eqn{A} in [\eqn{km^2}], \eqn{t} in [\eqn{s}], \eqn{C} in [\eqn{kg/m^3}]:
+\item{\eqn{V} in [\eqn{m^3}], \eqn{A} in [\eqn{km^2}], \eqn{t} in [\eqn{s}], \eqn{C} in [\eqn{kg/m^3}]:
 The flux unit is [\eqn{kg/km^2/s}].}
 }
 
@@ -126,9 +129,9 @@ that depends on soil, gas, and chamber characteristics. The HMR function then re
 requested to confirm it or to select another data analysis. The possible choices are:
 
 \itemize{
-\item{-}{HMR: Non-linear regression.}
-\item{-}{LR: Linear regression.}
-\item{-}{No flux: Abort analysis and claim zero flux.}
+\item{HMR: Non-linear regression.}
+\item{LR: Linear regression.}
+\item{No flux: Abort analysis and claim zero flux.}
 }
 
 The HMR function recommends the first choice if possible, but for linear concentration data or noisy data representing no clear trend the
@@ -158,21 +161,23 @@ A data frame with one row per analysed data series and variables:
   \item{f0.lo95}{The lower end-point of the 95\%-confidence interval for the flux.}
   \item{f0.up95}{The upper end-point of the 95\%-confidence interval for the flux.}
   \item{Method}{The method used for estimating the flux.}
-  \item{Warning}{A character string that contains a warning message in case of estimation problems, e.g.\ if linear regression estimated a negative predeployment concentration.}
+  \item{Warning}{A character string that contains a warning message in case of estimation problems, e.g. if linear regression estimated a negative predeployment concentration.}
   \item{LR.f0}{The flux estimated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.se}{The standard error of the flux estimated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.p}{The p-value for the null hypothesis of zero flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.lo95}{The lower end-point of the 95\%-confidence interval for the flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.up95}{The upper end-point of the 95\%-confidence interval for the flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
-  \item{LR.Warning}{A character string that contains a warning message if linear regression estimated a negative predeployment concentration. (Only present if \code{LR.always=TRUE}.)}
-The data frame is also exported as a semicolon-separated file named after the data file preceded by 'HMR - ' and located in the data file folder.
+  \item{LR.Warning}{A character string that contains a warning message if linear regression estimated a negative predeployment concentration. (Only present if
+  \code{LR.always=TRUE}.)}
+The data frame is also exported to a file named after the data file preceded by 'HMR - ' and located in the data file folder. The exported file
+uses the same column separator as the data file.
 }
-\author{Asger R.\ Pedersen, Ph.D.\ in statistics, Senior scientist at Aarhus University, Denmark}
+\author{Asger R. Pedersen, Ph.D. in statistics, Senior scientist at Aarhus University, Denmark}
 \references{
-Hutchinson, G.L.\ and Mosier, A.R.\ (1981). Improved soil cover method for field measurement of nitrous oxide fluxes.
-\emph{Soil Science Society of America Journal}, \bold{45}, p.\ 311-316.
+Hutchinson, G.L. and Mosier, A.R. (1981). Improved soil cover method for field measurement of nitrous oxide fluxes.
+\emph{Soil Science Society of America Journal}, \bold{45}, p. 311-316.
 
-Seber, G.A.F.\ and Wild, C.J.\ (1989). \emph{Nonlinear regression}. Wiley, New York.
+Seber, G.A.F. and Wild, C.J. (1989). \emph{Nonlinear regression}. Wiley, New York.
 }
 \examples{
 \dontrun{
