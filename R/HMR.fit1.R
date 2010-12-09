@@ -6,8 +6,8 @@
   ### Kammerets effektive højde
   h<-V/A
 
-  ### HMR-analyse hvis "n>3"
-  if (n>3)
+  ### HMR-analyse hvis "n>2"
+  if (n>2)
   {
     ### "xOK(x)" returnerer "TRUE", hvis "x" ikke indeholder "NA", "-Inf" eller "Inf"; ellers "FALSE".
     xOK<-function(x)
@@ -112,6 +112,19 @@
       list(kappa.lo=kappa.lo,kappa.up=kappa.up,code=code)
     }
     ramme<-indramme()
+    # Ekstra test hvis "ramme$code=1" - findes der valide HM-modeller?
+    if (ramme$code>0)
+    {
+      logkappa<-seq(log(ramme$kappa.lo),log(ramme$kappa.up),l=ngrid)
+      vMSE<-rep(NA,ngrid); vcol<-rep(NA,ngrid)
+      for (i in 1:ngrid)
+      {
+        dum<-MSE.list(logkappa[i])
+        vMSE[i]<-dum$MSE
+        if ((dum$C0<=0)|(dum$phi<=0)) {vcol[i]<-2} else {vcol[i]<-3}
+      }
+      if (sum(vcol==3)==0) {ramme$code<-0}
+    }
   } else {ramme<-list(code=0)}
 
   ### Valg af dataanalyse
@@ -162,10 +175,12 @@
         logkappa.opt<-opt$minimum; MSE.opt<-opt$objective
         if (MSE.big<MSE.opt) {logkappa.opt<-logkappa.big; MSE.opt<-MSE.big}
       }
+      # Kontrollere at optimum svarer til valid HM-model
+      EST<-MSE.list(logkappa.opt)  
+      if ((EST$C0<=0)|(EST$phi<=0)) {logkappa.opt<-logkappa.big; MSE.opt<-MSE.big}
     }
     # Test for linearitet og manglende fit
-    EST<-MSE.list(logkappa.opt)
-    if ((EST$C0>0)&(EST$phi>0)) {maintext<-'HMR'}
+    maintext<-'HMR' # Det er kontrolleret ovenfor, at "logkappa.opt" svarer til valid HM-model
     if (((vMSE[vcol==3][1]-MSE.big)<=MSE.zero)&((vMSE[vcol==3][length(vMSE[vcol==3])]-MSE.big)>MSE.zero))
     {
       EST<-as.numeric(lsfit(tid,konc)$coef)
@@ -202,17 +217,20 @@
         lines(c(1,1),c(0,1),lty=1,lwd=1,col=1)
         text(0.5,0.5,'Too few grid-points!',adj=0.5,col=2)
       }
-      plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('Recommendation: ',maintext,sep=''))
       ptid<-seq(0,max(tid),l=npred)
-      kappa<-exp(logkappa.opt); EST<-MSE.list(logkappa.opt); phi<-EST$phi; f0<-EST$f0
+      kappa<-exp(logkappa.opt); EST<-MSE.list(logkappa.opt); phi<-EST$phi; f0<-EST$f0; C0<-EST$C0
       x<-exp(-kappa*ptid)/(-kappa*h); pkonc.HMR<-phi+f0*x
+      maxy<-min(max(konc,C0),2*max(konc))
+      plot(c(0,max(tid)),c(min(konc,C0),maxy),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('Recommendation: ',maintext,sep=''))
+      points(tid,konc,type='p',pch=16,cex=1.5)
       EST<-as.numeric(lsfit(tid,konc)$coef)
       pkonc.LR<-EST[1]+EST[2]*ptid
       pkonc.NE<-rep(mean(konc),length(ptid))
       lines(ptid,pkonc.HMR,lty=1,col=4)
       lines(ptid,pkonc.LR,lty=1,col=colors()[498])
       lines(ptid,pkonc.NE,lty=2,col=1)
-      legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
+      if (C0>max(konc)) {legend(median(tid),maxy,legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))} else
+      {legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))}
       plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='')
       polygon(c(0.1,0.1,0.45,0.45,0.1),c(0.7,0.9,0.9,0.7,0.7),density=-1,col=4,border=1,lty=1,lwd=1)
       text(0.275,0.8,'HMR',adj=0.5,col=colors()[1],cex=1.5)
@@ -243,11 +261,14 @@
           else
             postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
           par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-          plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': ',maintext,sep=''))
+          maxy<-min(max(konc,C0),2*max(konc))
+          plot(c(0,max(tid)),c(min(konc,C0),maxy),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': ',maintext,sep=''))
+          points(tid,konc,type='p',pch=16,cex=1.5)
           lines(ptid,pkonc.HMR,lty=1,col=4)
           lines(ptid,pkonc.LR,lty=1,col=colors()[498])
           lines(ptid,pkonc.NE,lty=2,col=1)
-          legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))
+          if (C0>max(konc)) {legend(median(tid),maxy,legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))} else
+          {legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))}
           dev.off()
           par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
         }
@@ -257,15 +278,16 @@
   {
     # Valg af analyse
     if (FollowHMR)
-    { # Bare kør løs!
-      if (maintext=='LR') {dacode<-2} else {dacode<-3}
+    { # Forsigtighedsprincip: No flux (dacode=3)
+      dacode<-3
     } else
     { # Valg af analyse foretages af brugeren
       pframe<-function() {lines(c(0,1),c(0,0),lty=1,lwd=2,col=1); lines(c(0,1),c(1,1),lty=1,lwd=2,col=1); lines(c(0,0),c(0,1),lty=1,lwd=2,col=1); lines(c(1,1),c(0,1),lty=1,lwd=2,col=1)}
       par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
       plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion'); pframe()
       plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum'); pframe()
-      plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')
+      plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')
+      points(tid,konc,type='p',pch=16,cex=1.5)
       ptid<-seq(0,max(tid),l=npred)
       EST<-as.numeric(lsfit(tid,konc)$coef)
       pkonc.LR<-EST[1]+EST[2]*ptid
@@ -299,7 +321,8 @@
           else
             postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
           par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-          plot(tid,konc,type='p',pch=16,cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': HMR could not be applied',sep=''))
+          plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': HMR could not be applied',sep=''))
+          points(tid,konc,type='p',pch=16,cex=1.5)
           lines(ptid,pkonc.LR,lty=1,col=colors()[498])
           lines(ptid,pkonc.NE,lty=2,col=1)
           legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))

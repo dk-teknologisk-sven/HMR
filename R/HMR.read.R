@@ -40,7 +40,7 @@
   ##   3. Ingen "NA" i "V", "A", "tid" eller "konc"
   ##   4. Ingen "Inf" eller "-Inf" i "V", "A", "tid" eller "konc"
   ##   5. Ingen negative værdier i "V", "A" eller "konc"
-  ##   6. "tid[1]=0", mens de øvrige værdier af "tid" skal være positive og stigende
+  ##   6. Værdierne af "tid" skal være positive og stigende
   FATAL<-FALSE
   if (class(Rdata)=='try-error')
   {
@@ -76,8 +76,8 @@
             # "Inf" eller "-Inf" i numeriske variable
             if ((max(abs(itid))==Inf)|(max(abs(ikonc))==Inf)|(max(abs(iV))==Inf)|(max(abs(iA))==Inf)) {serieOK<-FALSE} else
             {
-              # Ikke-positive værdier af "V", "A", "konc", "tid[-1]" eller "tid[1]<>0"
-              if ((min(iV)<=0)|(min(iA)<=0)|(min(ikonc)<=0)|(min(itid[-1])<=0)|(itid[1]<0)|(itid[1]>0)) {serieOK<-FALSE} else
+              # Ikke-positive værdier af "V", "A", "konc" eller "tid"
+              if ((min(iV)<=0)|(min(iA)<=0)|(min(ikonc)<=0)|(min(itid)<0)) {serieOK<-FALSE} else
               {
                 # "tid" er ikke-stigende
                 if (min(itid[-1]-itid[-length(itid)])<=0) {serieOK<-FALSE} else

@@ -1,5 +1,5 @@
 \name{HMR}
-\Rdversion{0.2.1}
+\Rdversion{0.3.0}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
@@ -99,9 +99,8 @@ Apart from the (required) headline the five columns contain:
   and \eqn{V=2.0101} [\eqn{L}] for data series \code{F1T3}, \code{F2T2}, and \code{F2V2}.}
   \item{Column 3}{The chamber cross-sectional area, \eqn{A}. In the sample data above, \eqn{A=0.5625} [\eqn{m^2}] for data series \code{k0a}
   and \code{k0d}, and \eqn{A=0.0201} [\eqn{m^2}] for data series \code{F1T3}, \code{F2T2}, and \code{F2V2}.}
-  \item{Column 4:}{The measurement time-points in increasing order starting with time zero (required). At least three observation time-points
-  per data series is required. In the sample data above, the time-points are provided in minutes and cover, approximately, two-four hour
-  periods per data series.}
+  \item{Column 4:}{The non-negative measurement time-points in increasing order. At least three observation time-points per data series is
+  required. In the sample data above, the time-points are provided in minutes and cover, approximately, two-four hour periods per data series.}
   \item{Column 5:}{The chamber concentrations associated with the time-points in the fourth column. In the sample data above, this column
   contains concentrations of nitrous oxide [\eqn{\mu g/L}].}
 }
