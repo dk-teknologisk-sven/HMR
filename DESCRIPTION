@@ -1,5 +1,5 @@
 Package: HMR
-Version: 0.3.0
+Version: 0.3.1
 Title: Flux estimation with static chamber data
 Author: Asger R. Pedersen <AsgerR.Pedersen@agrsci.dk>
 Maintainer: Asger R. Pedersen <AsgerR.Pedersen@agrsci.dk>
@@ -7,6 +7,6 @@ Description: Statistical analysis of static chamber concentration data
         for trace gas flux estimation
 Encoding: latin1
 License: GPL (>= 2)
-Packaged: 2010-12-09 08:36:37 UTC; ASGPED
+Packaged: 2012-10-29 08:57:08 UTC; ripley
 Repository: CRAN
-Date/Publication: 2010-12-09 11:48:16
+Date/Publication: 2012-10-29 08:57:08

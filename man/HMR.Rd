@@ -1,5 +1,5 @@
 \name{HMR}
-\Rdversion{0.3.0}
+\Rdversion{0.3.1}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series

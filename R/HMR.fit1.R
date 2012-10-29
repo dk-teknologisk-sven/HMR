@@ -342,16 +342,24 @@
       kappa<-exp(logkappa.opt)
       x<-exp(-kappa*tid)/(-kappa*h)
       dum<-lsfit(x,konc)
-      f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
+      if (n>3) {f0.se<-as.numeric(ls.diag(dum)$std.err)[2]} else {f0.se<-NA}
       phi<-as.numeric(dum$coef)[1]
       f0.est<-as.numeric(dum$coef)[2]
       if (PHMR) {PHMR.ptid<-seq(0,max(tid),l=npred); PHMR.pkonc<-phi+f0.est*(exp(-kappa*PHMR.ptid)/(-kappa*h))}
-      f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
-      fraktil<-qt(p=0.975,df=n-2)
-      f0.lo95<-f0.est-fraktil*f0.se
-      f0.up95<-f0.est+fraktil*f0.se
-      method<-'HMR'
-      advarsel<-'None'
+      if (n>3)
+      {
+        f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
+        fraktil<-qt(p=0.975,df=n-2)
+        f0.lo95<-f0.est-fraktil*f0.se
+        f0.up95<-f0.est+fraktil*f0.se
+        method<-'HMR'
+        advarsel<-'None'
+      } else
+      {
+        f0.p<-NA; f0.lo95<-NA; f0.up95<-NA
+        method<-'HMR'
+        advarsel<-'No residual degrees of freedom with n=3'
+      }
     } else
     {
       if (dacode==2)
