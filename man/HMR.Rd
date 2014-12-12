@@ -1,5 +1,5 @@
 \name{HMR}
-\Rdversion{0.3.1}
+\Rdversion{0.3.2}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
@@ -171,7 +171,7 @@ A data frame with one row per analysed data series and variables:
 The data frame is also exported to a file named after the data file preceded by 'HMR - ' and located in the data file folder. The exported file
 uses the same column separator as the data file.
 }
-\author{Asger R. Pedersen, Ph.D. in statistics, Senior scientist at Aarhus University, Denmark}
+\author{Asger R. Pedersen, Ph.D. in statistics, Hammel Neurorehabilitation Centre and University Research Clinic, Aarhus University, Denmark}
 \references{
 Hutchinson, G.L. and Mosier, A.R. (1981). Improved soil cover method for field measurement of nitrous oxide fluxes.
 \emph{Soil Science Society of America Journal}, \bold{45}, p. 311-316.

@@ -26,7 +26,7 @@
         dum<-try(qr(XtX)$rank,silent=TRUE)
         if ((class(dum)!='try-error')&(dum==2))
         {
-          b<-as.numeric(lsfit(x,y,inter=TRUE)$coef)
+          b<-as.numeric(lsfit(x,y,intercept=TRUE)$coef)
           code<-1
         } else {b<-NA; code<-0}
       } else {b<-NA; code<-0}
@@ -365,7 +365,7 @@
       if (dacode==2)
       {
         # LR
-        dum<-lsfit(tid/h,konc,inter=TRUE)
+        dum<-lsfit(tid/h,konc,intercept=TRUE)
         C0.est<-as.numeric(dum$coef[1])
         f0.est<-as.numeric(dum$coef[2])
         f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
@@ -395,7 +395,7 @@
       LR.advarsel<-advarsel
     } else
     {
-      dum<-lsfit(tid/h,konc,inter=TRUE)
+      dum<-lsfit(tid/h,konc,intercept=TRUE)
       LR.C0<-as.numeric(dum$coef[1])
       LR.f0<-as.numeric(dum$coef[2])
       LR.f0.se<-as.numeric(ls.diag(dum)$std.err)[2]

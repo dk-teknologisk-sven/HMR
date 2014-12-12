@@ -1,5 +1,6 @@
-# Default NAMESPACE created by R
-# Remove the previous line if you edit this file
+export(HMR)
 
-# Export all names
-exportPattern(".")
+importFrom(utils, write.table)
+importFrom(graphics, par, plot, points, lines, text, legend, polygon, mtext, locator, frame)
+importFrom(stats, lsfit, optimize, pt, qt)
+importFrom(grDevices, jpeg, postscript, dev.off)
