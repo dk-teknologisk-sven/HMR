@@ -1,12 +1,13 @@
 \name{HMR}
-\Rdversion{0.3.2}
+\Rdversion{0.4.1}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
 by recommending a specific data analysis and performing the user selected analysis. Finally, it exports the results to a
 semicolon- or comma-separated file.}
 \usage{HMR(filename, series = NA, dec = '.', sep = ';', JPG = FALSE, PS = FALSE,
-PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
+PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000,
+kappa.fixed = FALSE, show.message = TRUE)}
 \arguments{
   \item{filename}{The name of a HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
   command, e.g. \code{setwd('C:/My HMR applications')}, or through the 'File|Change dir...' menu. The required fixed format of HMR
@@ -35,6 +36,12 @@ PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000)}
   The default is \code{FollowHMR=FALSE}.}
   \item{ngrid}{The number of grid-points in the initial grid search of the minimum of the criterion function. It must be at least 100,
   and the default is \code{ngrid=1000}.} 
+  \item{kappa.fixed}{A logical indicating whether the curvature parameter \eqn{\kappa} should be considered known (\code{kappa.fixed=TRUE})
+  or the estimation uncertainty should be accounted for in the standard error of the estimated flux (\code{kappa.fixed=FALSE}). See also
+  the message displayed in \code{R Console} for each successful call of \code{HMR}, cf. option \code{show.message} below. The default
+  is \code{kappa.fixed=FALSE}.} 
+  \item{show.message}{HMR version 0.4.1 starts every successful call by displaying a message in \code{R Console} about an important
+  methodological change, but this can be suppressed by specifying \code{show.message=FALSE}. The default is \code{show.message=TRUE}.} 
 }
 \details{HMR data files must be semicolon- or comma-separated files organised in five columns containing data series names, chamber
 volumes, chamber cross-sectional areas, observation time-points, and the observed chamber concentrations. Semicolon- and comma-separated
@@ -193,12 +200,12 @@ setwd('C:/My HMR applications')
 HMR(filename='N2O.csv')
 
 # Produces the following output:
-  Series         f0      f0.se       f0.p    f0.lo95    f0.up95 Method Warning
-1    k0a 2.5968E+01 1.4721E+00 7.2967E-09 2.2688E+01 2.9248E+01    HMR    None
-2    k0d 1.8720E+01 1.3961E+00 2.9756E-07 1.5561E+01 2.1878E+01    HMR    None
-3   F1T3 2.1265E+02 1.2176E+01 4.9647E-07 1.8386E+02 2.4144E+02    HMR    None
-4   F2T2 4.5093E+01 4.4410E+00 5.2977E-04 3.2762E+01 5.7423E+01    HMR    None
-5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05 4.5884E+01 6.5822E+01     LR    None
+  Series         f0      f0.se       f0.p     f0.lo95    f0.up95 Method Warning
+1    k0a 2.5968E+01 4.5356E+00 2.8500E-04  1.5708E+01 3.6229E+01    HMR    None
+2    k0d 1.8720E+01 4.1881E+00 2.0842E-03  9.0617E+00 2.8377E+01    HMR    None
+3   F1T3 2.1265E+02 3.6719E+01 1.1605E-03  1.2280E+02 3.0250E+02    HMR    None
+4   F2T2 4.5093E+01 1.4702E+01 5.4691E-02 -1.6971E+00 9.1882E+01    HMR    None
+5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05  4.5884E+01 6.5822E+01     LR    None
 
 # The output is also exported to the semicolon-separated file
 # 'C:\My HMR applications\HMR - N2O.csv'.
@@ -212,15 +219,15 @@ HMR(filename=datafile,series=c('k0a','k0d'),PHMR=TRUE)
 
 # Analyse all data series with both linear regression and the
 # user selected analysis:
-HMR(filename=datafile,LR.always=TRUE)
+HMR(filename='N2O.csv',LR.always=TRUE)
 
 # Produces the following (slightly edited) output:
-  Series         f0      f0.se       f0.p    f0.lo95    f0.up95 Method Warning...
-1    k0a 2.5968E+01 1.4721E+00 7.2967E-09 2.2688E+01 2.9248E+01    HMR    None...
-2    k0d 1.8720E+01 1.3961E+00 2.9756E-07 1.5561E+01 2.1878E+01    HMR    None...
-3   F1T3 2.1265E+02 1.2176E+01 4.9647E-07 1.8386E+02 2.4144E+02    HMR    None...
-4   F2T2 4.5093E+01 4.4410E+00 5.2977E-04 3.2762E+01 5.7423E+01    HMR    None...
-5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05 4.5884E+01 6.5822E+01     LR    None...
+  Series         f0      f0.se       f0.p     f0.lo95    f0.up95 Method Warning...
+1    k0a 2.5968E+01 4.5356E+00 2.8500E-04  1.5708E+01 3.6229E+01    HMR    None...
+2    k0d 1.8720E+01 4.1881E+00 2.0842E-03  9.0617E+00 2.8377E+01    HMR    None...
+3   F1T3 2.1265E+02 3.6719E+01 1.1605E-03  1.2280E+02 3.0250E+02    HMR    None...
+4   F2T2 4.5093E+01 1.4702E+01 5.4691E-02 -1.6971E+00 9.1882E+01    HMR    None...
+5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05  4.5884E+01 6.5822E+01     LR    None...
 
 ...      LR.f0   LR.f0.se    LR.f0.p LR.f0.lo95 LR.f0.up95 LR.Warning
 ... 8.9948E+00 1.1729E+00 1.7021E-05 6.3813E+00 1.1608E+01       None

@@ -1,4 +1,4 @@
-.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,LR.always,FollowHMR,JPG,PS,PHMR,npred,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter)
+.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,LR.always,FollowHMR,JPG,PS,PHMR,npred,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter,kappa.fixed)
 {
   ### Stikprøvestørrelse
   n<-length(konc)
@@ -342,23 +342,66 @@
       kappa<-exp(logkappa.opt)
       x<-exp(-kappa*tid)/(-kappa*h)
       dum<-lsfit(x,konc)
-      if (n>3) {f0.se<-as.numeric(ls.diag(dum)$std.err)[2]} else {f0.se<-NA}
       phi<-as.numeric(dum$coef)[1]
       f0.est<-as.numeric(dum$coef)[2]
       if (PHMR) {PHMR.ptid<-seq(0,max(tid),l=npred); PHMR.pkonc<-phi+f0.est*(exp(-kappa*PHMR.ptid)/(-kappa*h))}
-      if (n>3)
+      if (kappa.fixed)
       {
-        f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
-        fraktil<-qt(p=0.975,df=n-2)
-        f0.lo95<-f0.est-fraktil*f0.se
-        f0.up95<-f0.est+fraktil*f0.se
-        method<-'HMR'
-        advarsel<-'None'
+        if (n>3)
+        {
+          f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
+          f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
+          fraktil<-qt(p=0.975,df=n-2)
+          f0.lo95<-f0.est-fraktil*f0.se
+          f0.up95<-f0.est+fraktil*f0.se
+          method<-'HMR'
+          advarsel<-'None'
+        } else
+        {
+          f0.p<-NA; f0.lo95<-NA; f0.up95<-NA
+          method<-'HMR'
+          advarsel<-'No residual degrees of freedom with n=3'
+        }
       } else
       {
-        f0.p<-NA; f0.lo95<-NA; f0.up95<-NA
-        method<-'HMR'
-        advarsel<-'No residual degrees of freedom with n=3'
+        if (n>3)
+        {
+          s2<-sum((konc-phi-f0.est*x)*(konc-phi-f0.est*x))/(n-3)
+          y<-(kappa*tid+1)/(-kappa)
+          O11<-n
+          O12<-sum(x); O21<-O12
+          O13<-sum(x*y); O31<-O13
+          O22<-sum(x*x)
+          O23<-sum(x*x*y); O32<-O23
+          O33<-sum(x*x*y*y)
+          O<-matrix(c(O11,O12,O13,O21,O22,O23,O31,O32,O33),nrow=3,ncol=3,byrow=TRUE)
+          tjek<-try(solve(O),silent=TRUE)
+          if (class(tjek)!='try-error')
+          {
+            f0.se<-sqrt(s2*solve(O)[2,2])
+            f0seOK<-TRUE
+          } else
+          {
+            f0.se<-NA
+            f0seOK<-FALSE
+          }
+        } else {f0.se<-NA; f0seOK<-FALSE}
+        if ((n>3)&(f0seOK))
+        {
+          f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-3)
+          fraktil<-qt(p=0.975,df=n-3)
+          f0.lo95<-f0.est-fraktil*f0.se
+          f0.up95<-f0.est+fraktil*f0.se
+          method<-'HMR'
+          advarsel<-'None'
+        } else
+        {
+          f0.p<-NA; f0.lo95<-NA; f0.up95<-NA
+          method<-'HMR'
+          if ((n<=3)&(!(f0seOK))) {advarsel<-'No residual degrees of freedom with n=3'}
+          if ((n<=3)&(f0seOK))    {advarsel<-'No residual degrees of freedom with n=3'}
+          if ((n>3)&(!(f0seOK)))  {advarsel<-'Standard error could not be computed'}
+        }
       }
     } else
     {
