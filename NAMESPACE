@@ -1,6 +1,6 @@
 export(HMR)
 
-importFrom(utils, write.table)
+importFrom(utils, write.table, read.table)
 importFrom(graphics, par, plot, points, lines, text, legend, polygon, mtext, locator, frame)
-importFrom(stats, lsfit, optimize, pt, qt)
-importFrom(grDevices, jpeg, postscript, dev.off)
+importFrom(stats, ls.diag, median, lsfit, optimize, pt, qt)
+importFrom(grDevices, colors, jpeg, postscript, dev.off)

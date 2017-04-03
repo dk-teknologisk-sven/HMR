@@ -366,19 +366,22 @@
       {
         if (n>3)
         {
-          s2<-sum((konc-phi-f0.est*x)*(konc-phi-f0.est*x))/(n-3)
-          y<-(kappa*tid+1)/(-kappa)
+          f<-x; fm<-(1+tid*kappa)*(-f)
+          Sf<-sum(f); SSf<-sum(f*f); Sfm<-sum(fm); SSfm<-sum(fm*fm)
+          SPffm<-sum(f*fm)
           O11<-n
-          O12<-sum(x); O21<-O12
-          O13<-sum(x*y); O31<-O13
-          O22<-sum(x*x)
-          O23<-sum(x*x*y); O32<-O23
-          O33<-sum(x*x*y*y)
-          O<-matrix(c(O11,O12,O13,O21,O22,O23,O31,O32,O33),nrow=3,ncol=3,byrow=TRUE)
+          O12<-Sf
+          O13<--f0.est*Sfm
+          O22<-SSf
+          O23<--f0.est*SPffm
+          O33<-f0.est*f0.est*SSfm
+          O21<-O12; O31<-O13; O32<-O23
+          s2<-sum((konc-phi-f0.est*x)*(konc-phi-f0.est*x))/(n-3)
+          O<-matrix(c(O11,O12,O13,O21,O22,O23,O31,O32,O33),nrow=3,ncol=3,byrow=TRUE)/s2
           tjek<-try(solve(O),silent=TRUE)
           if (class(tjek)!='try-error')
           {
-            f0.se<-sqrt(s2*solve(O)[2,2])
+            f0.se<-sqrt(solve(O)[2,2])
             f0seOK<-TRUE
           } else
           {

@@ -1,5 +1,5 @@
 \name{HMR}
-\Rdversion{0.4.1}
+\Rdversion{0.4.2}
 \alias{HMR}
 \title{Flux estimation with static chamber data}
 \description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
@@ -7,7 +7,7 @@ by recommending a specific data analysis and performing the user selected analys
 semicolon- or comma-separated file.}
 \usage{HMR(filename, series = NA, dec = '.', sep = ';', JPG = FALSE, PS = FALSE,
 PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000,
-kappa.fixed = FALSE, show.message = TRUE)}
+kappa.fixed = FALSE)}
 \arguments{
   \item{filename}{The name of a HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
   command, e.g. \code{setwd('C:/My HMR applications')}, or through the 'File|Change dir...' menu. The required fixed format of HMR
@@ -36,12 +36,15 @@ kappa.fixed = FALSE, show.message = TRUE)}
   The default is \code{FollowHMR=FALSE}.}
   \item{ngrid}{The number of grid-points in the initial grid search of the minimum of the criterion function. It must be at least 100,
   and the default is \code{ngrid=1000}.} 
-  \item{kappa.fixed}{A logical indicating whether the curvature parameter \eqn{\kappa} should be considered known (\code{kappa.fixed=TRUE})
-  or the estimation uncertainty should be accounted for in the standard error of the estimated flux (\code{kappa.fixed=FALSE}). See also
-  the message displayed in \code{R Console} for each successful call of \code{HMR}, cf. option \code{show.message} below. The default
-  is \code{kappa.fixed=FALSE}.} 
-  \item{show.message}{HMR version 0.4.1 starts every successful call by displaying a message in \code{R Console} about an important
-  methodological change, but this can be suppressed by specifying \code{show.message=FALSE}. The default is \code{show.message=TRUE}.} 
+  \item{kappa.fixed}{A logical indicating whether the curvature parameter \eqn{\kappa} should be considered known
+  (\code{kappa.fixed=TRUE}) or the estimation uncertainty should be accounted for in the standard error of the estimated flux
+  (\code{kappa.fixed=FALSE}). Option \code{kappa.fixed=FALSE} ensures consistency between the standard errors and p-values of the
+  three available methods, as methods "LR" (\eqn{\kappa}=0) and "No flux" (\eqn{\kappa}=infinity) discard the estimation uncertainty
+  in the chosen value of \eqn{\kappa}. For non-linear data, however, the standard error and the the p-value will be underestimated
+  with method "HMR". Option \code{kappa.fixed=FALSE} ensures that the standard error and the p-value are not underestimated for
+  non-linear data with method "HMR". The difference between the two options is particularly important with nearly linear data,
+  where \code{kappa.fixed=FALSE} may present a statistically insignificant non-linear flux and a statistically significant
+  linear flux. The default is \code{kappa.fixed=FALSE}.}
 }
 \details{HMR data files must be semicolon- or comma-separated files organised in five columns containing data series names, chamber
 volumes, chamber cross-sectional areas, observation time-points, and the observed chamber concentrations. Semicolon- and comma-separated
