@@ -1,251 +1,362 @@
 \name{HMR}
-\Rdversion{0.4.2}
+
 \alias{HMR}
-\title{Flux estimation with static chamber data}
-\description{HMR reads static chamber data from a semicolon- or comma-separated file, and then processes each data series
-by recommending a specific data analysis and performing the user selected analysis. Finally, it exports the results to a
-semicolon- or comma-separated file.}
-\usage{HMR(filename, series = NA, dec = '.', sep = ';', JPG = FALSE, PS = FALSE,
-PHMR = FALSE, npred = 500, LR.always = FALSE, FollowHMR = FALSE, ngrid = 1000,
-kappa.fixed = FALSE)}
+
+\title{Trace gas flux estimation with static chamber data}
+
+\description{HMR reads static chamber data from a semicolon/comma separated ASCII text file and analyzes the selected data series
+by either user selected (with decision support) models or by user configured automatically selected models. Results are exported
+to a semicolon/comma separated ASCII text file.}
+
+\usage{HMR(filename, series = NA, dec = '.', sep = ';', SatPct = NA, SatTimeMin = NA,
+pfvar = NA, pfalpha = 0.05, LR.always = FALSE, FollowHMR = FALSE,
+IfNoValidHMR = 'No flux', IfNoFlux = 'No flux', IfNoSignal = 'No flux',
+Display.Message = TRUE)}
+
 \arguments{
-  \item{filename}{The name of a HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
-  command, e.g. \code{setwd('C:/My HMR applications')}, or through the 'File|Change dir...' menu. The required fixed format of HMR
-  data files is described in the details section below.}
-  \item{series}{Data series in the data file for which analysis is requested. The default \code{series=NA} requests analysis of all
-  available data series, whereas for example \code{series=c('k0a','k0d')} only requests analysis of the series named \code{k0a} and
-  \code{k0d}, cf. the sample data in the details section below.}
-  \item{dec}{The decimal separator used in the data file. The options are \code{dec='.'} and \code{dec=','}, and the default is
-  \code{dec='.'}.}
-  \item{sep}{The column separator used in the data file. The options are \code{sep=';'} and \code{sep=','}, and the default is
-  \code{sep=';'}.}
-  \item{JPG}{A logical indicating whether plots of the model fits should be exported as JPG-files. A plot is exported for each
-  analysed data series, and the files are named after the data series and located in the data file folder. The default is
-  \code{JPG=FALSE}.}
-  \item{PS}{A logical indicating whether plots of the model fits should be exported as postscript files. A plot is exported for each
-  analysed data series, and the files are named after the data series and located in the data file folder. The default is
-  \code{PS=FALSE}.}
-  \item{PHMR}{A logical indicating whether model predicted values should be exported to a file for data series for which non-linear
-  modeling is selected. The export file is column separated like the data file and it is located in the data file folder and named after
-  the data file preceded by 'PHMR - '. The default is \code{PHMR=FALSE}.}
-  \item{npred}{If \code{PHMR=TRUE} (see above), \code{npred} model predicted values are exported for each data series. The default is
-  \code{npred=500}.}
-  \item{LR.always}{A logical indicating whether data series should be analysed by linear regression in addition to the user selected
+  \item{filename}{The name of an HMR data file. It is assumed that the data file folder has previously been set by the \code{setwd}
+  command, eg. \code{setwd('C:/My HMR applications')}, or through the \code{'File|Change dir...'} menu. The required fixed format
+  of HMR data files is described in the details section below.}
+
+  \item{series}{Data series in the data file to be analyzed by HMR. The default, \code{series=NA}, requests analysis of all available
+  data series, whereas eg. \code{series=c('A','B')} requests analysis of series named 'A' and 'B' in the data file.}
+
+  \item{dec}{The decimal separator used in the data file. Options are \code{dec='.'} and \code{dec=','} and the default is \code{dec='.'}.}
+
+  \item{sep}{The column separator used in the data file. Options are \code{sep=';'} and \code{sep=','} and the default is \code{sep=';'}.}
+
+  \item{SatPct}{The chamber saturation percentage assumed to be met no earlier than \code{SatTimeMin} after deployment; see details
+  on flux limiting below. The percentage must be >0 and <100 or \code{NA} (no saturation assumption). The default is \code{SatPct=NA}.}
+
+  \item{SatTimeMin}{The earliest time for chamber saturation \code{SatPct} assumed for for flux limiting; see details below. The
+  earliest saturation time must be >0 or \code{NA} (no saturation assumption). The default is \code{SatTimeMin=NA}.}
+
+  \item{pfvar}{The assumed variance of replicate measurements of the ambient trace gas concentration at the chamber site in case
+  of no gas emission used for prefiltering of data series before analysis; see details below. The variance must be >0 or \code{NA}
+  (no prefiltering). The default is \code{pfvar=NA}.}
+
+  \item{pfalpha}{The statistical significance level used for the prefiltering test; see details below. Data series with prefiltering
+  p-value less than \code{pfalpha} are classified as \code{'Noise'}, and \code{pfalpha} must be >0 and <1. The default is \code{pfalpha=0.05}.}
+
+  \item{LR.always}{A logical indicating whether data series should be analysed by linear regression in addition to the selected
   analysis. The default is \code{LR.always=FALSE}.}
-  \item{FollowHMR}{A logical indicating whether to select the data analysis recommended by HMR in all cases. This cancels all plotting.
-  The default is \code{FollowHMR=FALSE}.}
-  \item{ngrid}{The number of grid-points in the initial grid search of the minimum of the criterion function. It must be at least 100,
-  and the default is \code{ngrid=1000}.} 
-  \item{kappa.fixed}{A logical indicating whether the curvature parameter \eqn{\kappa} should be considered known
-  (\code{kappa.fixed=TRUE}) or the estimation uncertainty should be accounted for in the standard error of the estimated flux
-  (\code{kappa.fixed=FALSE}). Option \code{kappa.fixed=FALSE} ensures consistency between the standard errors and p-values of the
-  three available methods, as methods "LR" (\eqn{\kappa}=0) and "No flux" (\eqn{\kappa}=infinity) discard the estimation uncertainty
-  in the chosen value of \eqn{\kappa}. For non-linear data, however, the standard error and the the p-value will be underestimated
-  with method "HMR". Option \code{kappa.fixed=FALSE} ensures that the standard error and the p-value are not underestimated for
-  non-linear data with method "HMR". The difference between the two options is particularly important with nearly linear data,
-  where \code{kappa.fixed=FALSE} may present a statistically insignificant non-linear flux and a statistically significant
-  linear flux. The default is \code{kappa.fixed=FALSE}.}
+
+  \item{FollowHMR}{A logical indicating whether or not automatic model selection should be applied. This cancels all plotting
+  and interactive user selection of analysis. The automatic selection can be configured by options \code{IfNoValidHMR},
+  \code{IfNoSignal} and \code{IfNoFlux}, and interacts with flux limiting and prefiltering as described below. The default is
+  \code{FollowHMR=FALSE}.}
+
+  \item{IfNoValidHMR}{With automatic model selection, ie. \code{FollowHMR=TRUE}, the analysis specified by \code{IfNoValidHMR} is
+  performed when no valid non-linear HMR model can be fitted; see further details below. Options are \code{'LR'} and \code{'No flux'}
+  and the default is \code{IfNoValidHMR='No flux'}.}
+
+  \item{IfNoFlux}{With automatic model selection, ie. \code{FollowHMR=TRUE}, the analysis specified by \code{IfNoFlux} is performed
+  when the HMR function recommends \code{'No flux'}; see further details below. Options are \code{'LR'} and \code{'No flux'} and the
+  default is \code{IfNoFlux='No flux'}.}
+
+  \item{IfNoSignal}{With automatic model selection and prefiltering, ie. \code{FollowHMR=TRUE} and \code{pfvar} are specified,
+  the analysis specified by \code{IfNoSignal} is performed when the prefiltering test classifies the data series as \code{'Noise'};
+  see further details below. Options are \code{'LR'} and \code{'No flux'} and the default is \code{IfNoSignal='No flux'}.}
+
+  \item{Display.Message}{The HMR startup message can be suppressed by \code{Display.Message=FALSE}. Default is \code{Display.Message=TRUE}.}
 }
-\details{HMR data files must be semicolon- or comma-separated files organised in five columns containing data series names, chamber
-volumes, chamber cross-sectional areas, observation time-points, and the observed chamber concentrations. Semicolon- and comma-separated
-files may be edited by text editors or spreadsheet software. The following 45 lines constitute an example of a HMR data file containing
-five data series of static chamber data:
+
+\details{
+\subsection{HMR basic methodology}{
+The HMR function implements the methods introduced in Pedersen et al. (2010) supplemented with methods for flux limiting, noise/signal
+prefiltering and options for automatic model selection; see sections below. This section describes the basic methodology introduced by
+Pedersen et al. (2010).
+
+\eqn{\; \; \; \; \; } The HMR approach is based on the exponential model (\code{'HMR'}):
+\deqn{C_t=\varphi+f_0 \frac{\exp(-\kappa t)}{-\kappa h}}
+Here \eqn{C_t} denotes the chamber concentration at time \eqn{t}, \eqn{\varphi} denotes the chamber equilibrium concentration, \eqn{f_0}
+denotes the initial flux to be estimated, \eqn{\kappa>0} is a non-linearity parameter, and \eqn{h=V/A} denotes the effective chamber height,
+ie. the chamber volume divided by the cross-sectional area. The HMR model can be derived from the diffusion model suggested by Hutchinson
+and Mosier (1981) (augmented to allow for horizontal gas transport by Pedersen et al. 2010) or from a standard two compartment model
+(Seber and Wild 1989, ch. 8) with first order trace gas transport in and out of the chamber compartment (in: emission; out: leakage through
+or horizontal transport below chamber walls). It can also simply be seen as a non-linear model with exponential curvature used for fitting
+exponentially curved concentration data and with:
+\deqn{f_0=h\frac{dC_t}{dt}|_{t=0}}
+The HMR approach does, however, insist on parameter values that correspond to positive fitted values of the initial and the equilibrium
+concentration, ie. \eqn{C_0} and \eqn{\varphi}. Further details can be found in Pedersen et al. (2010). For small values of \eqn{\kappa},
+the HMR model is close to the linear model (\code{'LR'}):
+\deqn{C_t=\varphi+f_0\frac{t}{h}}
+For large values of \eqn{\kappa}, it is close to the constant model (\code{'No flux'}):
+\deqn{C_t=C_0}
+The HMR function estimates the model parameters by minimzing the mean squared error (MSE) criterion. If the optimal value of \eqn{\kappa} is
+indeterminate by the MSE criterion, ie. the MSE continues to decrease for \eqn{\kappa} approaching either zero or infinity, the HMR function
+instead recommends the corresponding limiting model for flux estimation, ie. \code{'LR'} and \code{'No flux'}, respectively. In these limiting
+cases, the estimation uncertainty in the estimate of \eqn{\kappa} (zero or infinity) is not reflected in the standard error of the estimated
+flux (nor the 95\%-confidence interval or the p-value) implying a discontinuity when going from very small/large estimated values of \eqn{\kappa}
+in the non-linear model (\code{'HMR'}) to the limiting linear (\code{'LR'}) or constant model (\code{'No flux'}).
+} % Afslutning på 'HMR basic methodology'
+
+\subsection{HMR flux limiting}{
+The family of non-linear HMR models is clearly too large as all values of \eqn{\kappa>0} are permissible and large values of \eqn{\kappa} may
+correspond to huge and unrealistic fluxes. With small data series, such excessive fluxes may appear optimal by the MSE criterion when random
+patterns in data, erroneously, exhibit strong exponential curvature, so it may be important to limit the permissible values of \eqn{\kappa}.
+A priori, \eqn{\kappa} can not be bounded by any fixed number, as it depends on the time unit, the chamber design, local characteristica and
+more, but it may be limited by making assumptions about the chamber saturation. The non-linear model can be rewritten like:
+\deqn{C_t=C_0+(\varphi-C_0)(1-\exp(-\kappa t))}
+Hence, \eqn{1-\exp(-\kappa t)} denotes the saturation fraction at time \eqn{t>0} after deployment. According to the model, complete chamber
+is not obtained until \eqn{t=\infty}, but for a given saturation fraction, \eqn{0<p<1}, and assuming that this saturation is not obtained
+before time-point \eqn{T} after deployment, an upper limit for \eqn{\kappa} is implied by the equation:
+\deqn{\kappa \leq \frac{1}{T} \log(\frac{1}{1-p})}
+Even very crude assumptions about the chamber saturation may limit the permissible values of \eqn{\kappa} in an important way. \emph{Example}:
+As complete chamber saturation does not happen within finite time in the theoretical model, one may use eg. 99\% saturation in the model as
+a proxy for what is considered complete chamber saturation in real measurement situations. Assuming that this saturation will not occur until
+after \eqn{T=1} or \eqn{T=2} limits the permissible values of \eqn{\kappa} to \eqn{\kappa\leq 4.6} and \eqn{\kappa\leq 2.3}, respectively.
+
+\eqn{\; \; \; \; \; } Flux limiting with HMR is controlled by options \code{SatPct} and \code{SatTimeMin} that specifies the values of the
+saturation fraction (in \%) and the assumed earliest time-point for the saturation percentage, respectively. If flux limiting is active, ie.
+the globally optimal value of \eqn{\kappa} according to the MSE criterion is larger than the user specfified maximal value of \eqn{\kappa}
+(whereby the MSE criterion recommends \code{'No flux'}), then \code{'LR'} should be considered for estimating the flux as the mathematical
+justification for \code{'No flux'} is violated.
+} % Afslutning på 'HMR flux limiting'
+
+\subsection{HMR data prefiltering}{
+The MSE criterion is unable to detect if the variation in chamber concentrations is low relative to the variation in data that can be expected
+merely from variation in ambient trace gas concentration measurements at the site in case of no trace gas emission. Hence, and particularly with
+small samples, the MSE criterion may be fooled by random patterns in data and estimate a, potentially large, flux even if there is none. This is
+particularly problematic with the non-linear HMR model. To avoid this, external information is needed about the expected variation in measured
+chamber concentrations at the site in case of no flux. This variation depends on the analytical laboratory precision and on the natural variation
+of true trace gas concentrations in replicate samples from the site in case of no flux. Although this abstract quantity is presumably unknown,
+assessment of its value may prove useful for prefiltering of data series. For instance, the requested variability could be estimated from replicated
+samples of ambient air before chamber deployment, although this may lead to an overestimation due to the potential presence of trace gas emission
+at the site. Alternatively, one may consider the natural variation of true trace gas concentrations in replicate samples from the site to be
+negligible, in which case the requested variability is simply the analytical laboratory precision. This may of course underestimate the variability.
+In this way the abstract variability measure may be framed. If the frame is narrow, an intermediate value may be a good assessment of the required
+abstract variability, whereas the two framing values can be used for, respectively, conservative (overestimated variability: classifies too few
+data series as \code{'Signal'}) or liberal (underestimated variability: classifies too many data series as \code{'Signal'}) prefiltering.
+
+\eqn{\; \; \; \; \; } Given that a reasonable measure of the variation of replicate concentrations measurements at the site without flux can be
+provided, this can be used for prefiltering of data series, ie. the classification of series into \code{'Noise'} or \code{'Signal'}. The idea
+is then to avoid erroneous flux estimation for data series identified as \code{'Noise'}. The HMR prefiltering test assumes that replicate
+concentration measurements at the site without trace gas emission follow a normal distribution with variance \eqn{\sigma^2_0}. The prefiltering
+classification is performed by a one-sided statistical test of the null hypothesis of no variation in data in excess of what can be expected from
+concentration measurements from the site in case of no flux against the alternative hypothesis of larger variation in data than can be expected
+at the site in case of no flux: The prefiltering p-value is given by:
+\deqn{p=1-F_{\chi^2(n-1)}((n-1)\frac{s^2}{\sigma^2_0})}
+Here \eqn{n} denotes the sample size, \eqn{s^2} denotes the sample variance of measured chamber concentrations, and \eqn{F_{\chi^2(n-1)}} denotes
+the cumulative distribution function of the \eqn{\chi^2}-distribution with \eqn{n-1} degrees of freedom.
+
+\eqn{\; \; \; \; \; } With prefiltering at statistical significance level \eqn{\alpha}, the HMR function classifies data series as \code{'Signal'}
+if \eqn{p<\alpha} and otherwise as \code{'Noise'}. The level of prefiltering can be controlled by the selected values of \eqn{\sigma^2_0} and
+\eqn{\alpha}. With statistical significance level \eqn{\alpha}, \eqn{100\alpha\%} of data series will, erroneously, be classified as \code{'Signal'}
+due to statistical type I errors, so increasing \eqn{\alpha} will reduce the noise filtering rate for a given value of \eqn{\sigma^2_0}. Increasing
+the assumed variation of concentration measurements at the site without flux, ie. \eqn{\sigma^2_0}, increases the noise filtering rate as more data
+series will be classified as \code{'Noise'}.
+
+\eqn{\; \; \; \; \; } Prefiltering with HMR is controlled by options \code{pfvar} and \code{pfalpha} that specify \eqn{\sigma^2_0} and
+\eqn{\alpha}, respectively.
+} % Afslutning på 'HMR prefiltering'
+
+\subsection{HMR user selection of analysis}{
+To assist the user in selecting the appropriate method for flux estimation for a given data series, the HMR function displays -- organised
+in a 2x2 matrix -- plots of the criterion function, the various models fits, decision support from the flux limiting and prefiltering methods,
+and a panel with buttons for user selection of method for flux estimation. The upper left plot displays the criterion function over the range
+of numerically feasible values of \eqn{\kappa} -- possibly further limited by the user through flux limiting, cf. sections above. Green parts
+of the curve represent valid values of \eqn{\kappa}, red parts represent invalid values (cf. above), and the optimal value according to the MSE
+criterion is indicated by a blue square. The upper right plot is a zoom into the upper left plot, and the lower left plot shows the fit of the
+possible models with the model selected by the MSE criterion displayed in the headline. Moreover, decision support from the prefiltering and
+flux limiting methods is written in red text in this plot. The lower right panel contains buttons for user selection of the method for flux
+estimation (select by left mouse button click). Pressing the cancel button interrupts the HMR function.
+} % HMR user selection of analysis
+
+\subsection{HMR automatic selection of analysis}{
+Although users are encouraged to do sequentially user selection of model for flux estimation, HMR does facilitate automatic selection of analysis
+(\code{FollowHMR=TRUE}). The automatic selection is based on exactly the same decision support, however, with consistent unsubjective choices
+configured by the user through options \code{IfNoValidHMR}, \code{IfNoFlux} and \code{IfNoSignal} (cf. above). Note that \code{IfNoSignal} has
+precedence over \code{IfNoValidHMR} and \code{IfNoFlux} when relevant, and that \code{'LR'} is selected irrespective of the user selection for
+\code{IfNoFlux} if flux limiting is active, ie. the globally optimal value of \eqn{\kappa} according to the MSE criterion is larger than the
+user specfified maximal value of \eqn{\kappa} (whereby the MSE criterion recommends \code{'No flux'}).
+} % HMR automatic selection of analysis
+
+\subsection{HMR data processing order}{
+Firstly, HMR analyzes if the data series can be fitted by valid HMR models. If not, user selection between \code{'LR'} and \code{'No flux'} is
+supported by results from the prefiltering test if selected, and automatic model selection is controlled by the user selected values of
+\code{IfNoValidHMR} and \code{IfNoSignal}. If valid HMR models can be fitted, the range of values of \eqn{\kappa} is potentielly further limited
+by user selected flux limiting assumptions. User selection of models is then supported by the prefiltering and flux limiting methods, if selected,
+whereas automatic model selection is controlled by the user specified values of \code{IfNoFlux} and \code{IfNoSignal}.
+} % Afslutning på 'HMR data processing order'
+
+\subsection{HMR data files}{
+HMR data files are semicolon or comma separated files organised in five columns with, respectively, the \emph{data series names}, \emph{chamber
+volumes}, \emph{chamber cross-sectional areas}, \emph{observation time-points}, and the \emph{observed chamber concentrations}. Semicolon/comma
+separated files can for instance be created and edited by ASCII text editors or spreadsheet software. The following 36 lines shows an HMR data
+file containing four data series of static chamber data:
 
 \preformatted{
 Series;V;A;Time;Concentration
- k0a; 140.6250; 0.5625;   0;  13.98
- k0a; 140.6250; 0.5625;  10;  14.65
- k0a; 140.6250; 0.5625;  20;  15.15
- k0a; 140.6250; 0.5625;  30;  15.85
- k0a; 140.6250; 0.5625;  40;  16.29
- k0a; 140.6250; 0.5625;  50;  17.17
- k0a; 140.6250; 0.5625;  60;  17.45
- k0a; 140.6250; 0.5625;  70;  17.85
- k0a; 140.6250; 0.5625;  80;  17.79
- k0a; 140.6250; 0.5625;  90;  17.89
- k0a; 140.6250; 0.5625; 100;  17.63
- k0a; 140.6250; 0.5625; 110;  17.82
- k0d; 140.6250; 0.5625;   0;  15.60
- k0d; 140.6250; 0.5625;  10;  15.62
- k0d; 140.6250; 0.5625;  20;  16.53
- k0d; 140.6250; 0.5625;  30;  16.90
- k0d; 140.6250; 0.5625;  40;  17.40
- k0d; 140.6250; 0.5625;  50;  17.69
- k0d; 140.6250; 0.5625;  60;  18.64
- k0d; 140.6250; 0.5625;  70;  18.36
- k0d; 140.6250; 0.5625;  80;  19.14
- k0d; 140.6250; 0.5625; 110;  18.83
- k0d; 140.6250; 0.5625; 120;  19.27
-F1T3;   2.0101; 0.0201;   0;  15.00
-F1T3;   2.0101; 0.0201;  26;  39.34
-F1T3;   2.0101; 0.0201;  49;  91.74
-F1T3;   2.0101; 0.0201;  87; 121.66
-F1T3;   2.0101; 0.0201; 117; 130.33
-F1T3;   2.0101; 0.0201; 147; 132.04
-F1T3;   2.0101; 0.0201; 182; 147.97
-F1T3;   2.0101; 0.0201; 213; 149.78
-F1T3;   2.0101; 0.0201; 262; 152.37
-F2T2;   2.0101; 0.0201;   0;  10.87
-F2T2;   2.0101; 0.0201;  20;  19.49
-F2T2;   2.0101; 0.0201;  54;  24.99
-F2T2;   2.0101; 0.0201;  85;  27.24
-F2T2;   2.0101; 0.0201; 119;  33.13
-F2T2;   2.0101; 0.0201; 155;  30.14
-F2V2;   2.0101; 0.0201;   0;   9.94
-F2V2;   2.0101; 0.0201;  28;  31.64
-F2V2;   2.0101; 0.0201;  60;  48.88
-F2V2;   2.0101; 0.0201;  91;  58.08
-F2V2;   2.0101; 0.0201; 123;  76.16
-F2V2;   2.0101; 0.0201; 162; 106.83
+k0d;140.625;0.5625;0;15.60
+k0d;140.625;0.5625;10;15.62
+k0d;140.625;0.5625;20;16.53
+k0d;140.625;0.5625;30;16.90
+k0d;140.625;0.5625;40;17.40
+k0d;140.625;0.5625;50;17.69
+k0d;140.625;0.5625;60;18.64
+k0d;140.625;0.5625;70;18.36
+k0d;140.625;0.5625;80;19.14
+k0d;140.625;0.5625;110;18.83
+k0d;140.625;0.5625;120;19.27
+k10d;140.625;0.5625;0;0.3517
+k10d;140.625;0.5625;10;0.3523
+k10d;140.625;0.5625;20;0.3660
+k10d;140.625;0.5625;30;0.3673
+k10d;140.625;0.5625;40;0.3603
+k10d;140.625;0.5625;50;0.3623
+k10d;140.625;0.5625;60;0.3580
+k10d;140.625;0.5625;70;0.3650
+k10d;140.625;0.5625;80;0.3700
+k10d;140.625;0.5625;90;0.3673
+k10d;140.625;0.5625;110;0.3647
+k10d;140.625;0.5625;120;0.3693
+F2T2;2.0101;0.0201;0;10.87
+F2T2;2.0101;0.0201;20;19.49
+F2T2;2.0101;0.0201;54;24.99
+F2T2;2.0101;0.0201;85;27.24
+F2T2;2.0101;0.0201;119;33.13
+F2T2;2.0101;0.0201;155;30.14
+F2V2;2.0101;0.0201;0;9.940
+F2V2;2.0101;0.0201;28;31.64
+F2V2;2.0101;0.0201;60;48.88
+F2V2;2.0101;0.0201;91;58.08
+F2V2;2.0101;0.0201;123;76.16
+F2V2;2.0101;0.0201;162;106.8
 }
 
-Apart from the (required) headline the five columns contain:
-
-\itemize{
-  \item{Column 1:}{Text labels that identify the data series. The labels must be 100\% identical within data series and different between
-  data series. In the sample data above, the first column identifies five data series named \code{k0a}, \code{k0d}, \code{F1T3}, \code{F2T2},
+Apart from the required header (with optional ASCII character content), the five columns contain:
+\describe{
+  \item{Column 1}{Text labels that identify data series. Hence, labels must be identical within and different between data series. In the
+  sample data above, the first column identifies four data series named \code{k0d}, \code{k10d}, \code{F2T2}, and \code{F2V2}.}
+  \item{Column 2}{The chamber volumes, \eqn{V}. Chamber volumes must be identical within data series. In the sample data above, \eqn{V=140.625}
+  [\eqn{L}] for data series \code{k0d} and \code{k10d}, and \eqn{V=2.0101} [\eqn{L}] for data series \code{F2T2} and \code{F2V2}.}
+  \item{Column 3}{The chamber cross-sectional areas, \eqn{A}. Chamber cross-sectional areas must be identical within data series. In the sample
+  data above, \eqn{A=0.5625} [\eqn{m^2}] for data series \code{k0d} and \code{k10d}, and \eqn{A=0.0201} [\eqn{m^2}] for data series \code{F2T2}
   and \code{F2V2}.}
-  \item{Column 2:}{The chamber volume, \eqn{V}. In the sample data above, \eqn{V=140.625} [\eqn{L}] for data series \code{k0a} and \code{k0d},
-  and \eqn{V=2.0101} [\eqn{L}] for data series \code{F1T3}, \code{F2T2}, and \code{F2V2}.}
-  \item{Column 3}{The chamber cross-sectional area, \eqn{A}. In the sample data above, \eqn{A=0.5625} [\eqn{m^2}] for data series \code{k0a}
-  and \code{k0d}, and \eqn{A=0.0201} [\eqn{m^2}] for data series \code{F1T3}, \code{F2T2}, and \code{F2V2}.}
-  \item{Column 4:}{The non-negative measurement time-points in increasing order. At least three observation time-points per data series is
-  required. In the sample data above, the time-points are provided in minutes and cover, approximately, two-four hour periods per data series.}
-  \item{Column 5:}{The chamber concentrations associated with the time-points in the fourth column. In the sample data above, this column
-  contains concentrations of nitrous oxide [\eqn{\mu g/L}].}
+  \item{Column 4}{The measurement time-points within data series in strictly increasing order and with the first time-point equal to zero. At
+  least three observation time-points is required per data series. In the sample data above, time-points are in minutes and cover, approximately,
+  two-four hour periods per data series.}
+  \item{Column 5}{The measured chamber concentrations corresponding to the time-points in the fourth column. Chamber concentations must be
+  strictly positive. In the sample data above, the fifth column contains measured nitrous oxide concentrations [\eqn{\mu g/L}].}
 }
+Missing values (\code{NA}'s) or empty lines or columns are not allowed in HMR data files.
+} % Afslutning på 'HMR data files'
 
-Missing values (\code{NA}'s) are not allowed in HMR data files.
-
-There are no requirements regarding the units of input data. The chosen units do, however, determine the unit of the estimated flux, which
-has the same unit as \eqn{(VC)/ (At)}, where \eqn{t} and \eqn{C} denote, respectively, time and concentration. Some examples:
-
-\itemize{
-\item{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{h}], \eqn{C} in [\eqn{\mu g/L}]:
-The flux unit is [\eqn{\mu g/m^2/h}].}
-\item{\eqn{V} in [\eqn{L}], \eqn{A} in [\eqn{m^2}], \eqn{t} in [\eqn{min.}], \eqn{C} in [\eqn{ppmv=\mu L/L}]:
-The flux unit is [\eqn{\mu L/m^2/min.}].}
-\item{\eqn{V} in [\eqn{m^3}], \eqn{A} in [\eqn{km^2}], \eqn{t} in [\eqn{s}], \eqn{C} in [\eqn{kg/m^3}]:
-The flux unit is [\eqn{kg/km^2/s}].}
+\subsection{HMR data and flux physical units}{
+For maximal flexibility, HMR has no requirements for the physical units of input data. The chosen units do, however, determine the unit of
+the estimated flux, which has the physical unit of \eqn{(VC)/ (At)}, where \eqn{t} and \eqn{C} denote, respectively, time and concentration.
+Some examples:
+\tabular{lcl}{
+\eqn{V} \eqn{[L]},   \eqn{A} \eqn{[m^2]},  \eqn{t} \eqn{[h]},   \eqn{C} \eqn{[\mu g/L]} \tab \eqn{\Rightarrow} \tab \eqn{f_0} \eqn{[\mu g/m^2/h]} \cr
+\eqn{V} \eqn{[L]},   \eqn{A} \eqn{[m^2]},  \eqn{t} \eqn{[min]}, \eqn{C} \eqn{[\mu L/L]} \tab \eqn{\Rightarrow} \tab \eqn{f_0} \eqn{[\mu L/m^2/min]} \cr
+\eqn{V} \eqn{[m^2]}, \eqn{A} \eqn{[km^2]}, \eqn{t} \eqn{[s]},   \eqn{C} \eqn{[kg/m^3] } \tab \eqn{\Rightarrow} \tab \eqn{f_0} \eqn{[kg/km^2/s]}
 }
+} % Afslutning på 'HMR data and flux units'
+} %% Afslutningen på \details
 
-The HMR function analyses the data series sequentially, and starts each analysis by fitting the non-linear function
-(Hutchinson and Mosier, 1981)
-\deqn{C_t=\varphi+f_0 e^{-\kappa t}}
-using a single-parameter (\eqn{\kappa}) criterion (concentrated least squares; Seber and Wild, 1989). In this equation, \eqn{f_0}
-denotes the initial flux, \eqn{\varphi} denotes the new chamber equilibrium concentration, and \eqn{\kappa>0} is an adaption rate
-that depends on soil, gas, and chamber characteristics. The HMR function then recommends a particular analysis, and the user is
-requested to confirm it or to select another data analysis. The possible choices are:
-
-\itemize{
-\item{HMR: Non-linear regression.}
-\item{LR: Linear regression.}
-\item{No flux: Abort analysis and claim zero flux.}
-}
-
-The HMR function recommends the first choice if possible, but for linear concentration data or noisy data representing no clear trend the
-non-linear function will be overparameterised, and the HMR function will recommend linear regression or no flux. For linear concentration
-data the criterion function will not possess a unique optimum but rather continue to improve as \eqn{\kappa} tends to zero, and in such
-cases the HMR function will recommend data analysed by linear regression. For noisy concentration data with no clear trend the criterion
-function will also not possess a unique optimum but rather continue to improve as \eqn{\kappa} tends to infinity, and in such cases the
-HMR function will recommend data analysed by linear regression, or, if assuming a linear trend seems inappropriate, to abort analysis and
-claim no flux.
-
-To assist the user in selecting a data analysis the HMR function displays plots -- organised in a 2x2 matrix -- of the criterion function
-and the various models fits. The upper left plot displays the criterion function over the range of numerically feasible values of
-\eqn{\kappa}. Green parts of the curve represent values of \eqn{\kappa} for which the corresponding estimated values of \eqn{\varphi} and
-\eqn{C_0} are valid (positive), whereas red parts of the curve represent values of \eqn{\kappa} for which this is not the case. The optimal
-value of \eqn{\kappa} (minimises the criterion function over the valid values of \eqn{\kappa}) is indicated by a blue square. The upper
-right plot is a zoom into the upper left plot. The lower left plot displays the model fit of the various possible models, and the HMR
-recommendation for data analysis is displayed in the headline. The lower right panel contains four 'buttons' representing the four possible
-user selections (select by left mouse button click). Pressing the cancel button terminates the HMR function without completing the requested
-analyses.
-}
 \value{
-A data frame with one row per analysed data series and variables:
+HMR first examines the specified function arguments. If problems are detected, HMR halts and issues the comment \code{'Error in input parameters'}. Rules
+for the HMR function arguments are provided above in the \bold{Arguments} section. If specified function arguments are valid, HMR continues to examine the
+provided data file. If fatal problems are detected, HMR halts and issues the comment \code{'Data file could not be read'}. Typical problems with data files are:
+\item{(i)}{Inconsistency between the decimal and column separators used in the data file and the standards for these separators on the computer. The
+easiest way to resolve this issue is to specify the separators used in the data file as function arguments to HMR, ie. \code{dec} and \code{sep},
+respectively.}
+\item{(ii)}{Empty rows below or columns beside valid HMR data are not allowed in HMR data files.}
+If specified function arguments are valid, and the data file contains at least one valid data series, HMR continues to analyze data. The output is then
+a data frame with one row per analysed data series and variables:
   \item{Series}{Name of the data series.}
   \item{f0}{The estimated flux.}
   \item{f0.se}{The standard error of the estimated flux.}
   \item{f0.p}{The p-value for the null hypothesis of zero flux.}
   \item{f0.lo95}{The lower end-point of the 95\%-confidence interval for the flux.}
   \item{f0.up95}{The upper end-point of the 95\%-confidence interval for the flux.}
-  \item{Method}{The method used for estimating the flux.}
-  \item{Warning}{A character string that contains a warning message in case of estimation problems, e.g. if linear regression estimated a negative predeployment concentration.}
+  \item{Method}{The method used for estimating the flux (\code{'HMR'}, \code{'LR'}, \code{'No flux'} or \code{'None'}).}
+  \item{Warning}{A character string with a warning message in case of estimation problems.}
+  \item{Prefilter}{The prefiltering classification (\code{'Signal'}, \code{'Noise'} or \code{'None'}).}
+  \item{Prefilter.p}{The prefiltering p-value.}
+  \item{SatCrit.Warning}{A character string with a warning message if flux limiting is active.}
   \item{LR.f0}{The flux estimated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.se}{The standard error of the flux estimated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.p}{The p-value for the null hypothesis of zero flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.lo95}{The lower end-point of the 95\%-confidence interval for the flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
   \item{LR.f0.up95}{The upper end-point of the 95\%-confidence interval for the flux calculated by linear regression. (Only present if \code{LR.always=TRUE}.)}
-  \item{LR.Warning}{A character string that contains a warning message if linear regression estimated a negative predeployment concentration. (Only present if
-  \code{LR.always=TRUE}.)}
-The data frame is also exported to a file named after the data file preceded by 'HMR - ' and located in the data file folder. The exported file
-uses the same column separator as the data file.
+  \item{LR.Warning}{A character string with a warning message if linear regression estimated a negative predeployment concentration. (Only present if \code{LR.always=TRUE}.)}
+The data frame is also exported to a semicolon/comma separated file with the name of the data file preceded by 'HMR - ' and located in the data file folder.
+The exported file uses the same column and decimal separators as the data file.
 }
+
 \author{Asger R. Pedersen, Ph.D. in statistics, Hammel Neurorehabilitation Centre and University Research Clinic, Aarhus University, Denmark}
+
 \references{
 Hutchinson, G.L. and Mosier, A.R. (1981). Improved soil cover method for field measurement of nitrous oxide fluxes.
-\emph{Soil Science Society of America Journal}, \bold{45}, p. 311-316.
+\emph{Soil Science Society of America Journal}, \bold{45}, pp. 311-316.
 
 Seber, G.A.F. and Wild, C.J. (1989). \emph{Nonlinear regression}. Wiley, New York.
+
+Pedersen, A.R., Petersen, S.O. and Schelde, K. (2010): A comprehensive approach to soil-atmosphere trace-gas flux estimation with static chambers.
+\emph{European Journal of Soil Science}, \bold{61}, pp. 888-902.
 }
+
 \examples{
 \dontrun{
-# Suppose the sample data above are located on a Windows machine
-# in the file 'C:\My HMR applications\N2O.csv'.
+# Suppose the sample data above are located on a Windows machine in the file
+# 'C:\My HMR applications\N2O.csv'
 
 # Start by setting the data file folder:
 setwd('C:/My HMR applications')
 
-# Notice that R uses '/' in folder declarations, whereas
-# Windows uses '\'.
+# Notice that R uses '/' in folder declarations, whereas Windows uses '\'.
 
-# Analyse all data series:
+# Analyse all data series with default settings:
 HMR(filename='N2O.csv')
 
-# Produces the following output:
-  Series         f0      f0.se       f0.p     f0.lo95    f0.up95 Method Warning
-1    k0a 2.5968E+01 4.5356E+00 2.8500E-04  1.5708E+01 3.6229E+01    HMR    None
-2    k0d 1.8720E+01 4.1881E+00 2.0842E-03  9.0617E+00 2.8377E+01    HMR    None
-3   F1T3 2.1265E+02 3.6719E+01 1.1605E-03  1.2280E+02 3.0250E+02    HMR    None
-4   F2T2 4.5093E+01 1.4702E+01 5.4691E-02 -1.6971E+00 9.1882E+01    HMR    None
-5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05  4.5884E+01 6.5822E+01     LR    None
+# Produces the following (slightly edited) output when HMR recommendations are followed:
+  Series        f0     f0.se      f0.p    f0.lo95   f0.up95
+1    k0d 1.872e+01 4.188e+00 2.084e-03  9.062e+00 2.838e+01
+2   k10d 1.797e-01 1.385e-01 2.269e-01 -1.337e-01 4.930e-01
+3   F2T2 4.509e+01 1.470e+01 5.469e-02 -1.697e+00 9.188e+01
+4   F2V2 5.584e+01 3.586e+00 9.926e-05  4.588e+01 6.579e+01
+       Method Warning Prefilter Prefilter.p SatCrit.Warning
+     1    HMR    None      None          NA              NA
+     2    HMR    None      None          NA              NA
+     3    HMR    None      None          NA              NA
+     4     LR    None      None          NA              NA
+# The non-linear 'HMR' analysis was recommended by the MSE criterion for three data series,
+# whereas the 'LR' analysis was recommended for the fourth.
 
-# The output is also exported to the semicolon-separated file
-# 'C:\My HMR applications\HMR - N2O.csv'.
+# The output was also exported to the semicolon-separated file:
+# 'C:\My HMR applications\HMR - N2O.csv'
 
-# Analyse data series 'k0a' and 'k0d' and export model predicted
-# chamber concentrations:
-HMR(filename=datafile,series=c('k0a','k0d'),PHMR=TRUE)
+# Analyse all data series with flux limiting assuming 90\% chamber saturation not before 60 minutes:
+HMR(filename='N2O.csv',SatPct=90,SatTimeMin=60)
 
-# The model predicted concentrations are exported to the file
-# 'C:\My HMR applications\PHMR - N2O.csv'.
+# Produces the following (slightly edited) output when HMR recommendations are followed:
+  Series        f0     f0.se      f0.p    f0.lo95   f0.up95
+1    k0d 1.872e+01 4.188e+00 2.084e-03  9.061e+00 2.838e+01
+2   k10d 2.689e-02 9.257e-03 1.571e-02  6.261e-03 4.751e-02
+3   F2T2 4.509e+01 1.470e+01 5.469e-02 -1.697e+00 9.188e+01
+4   F2V2 5.584e+01 3.586e+00 9.926e-05  4.588e+01 6.579e+01
+       Method Warning Prefilter Prefilter.p
+     1    HMR    None      None          NA
+     2     LR    None      None          NA
+     3    HMR    None      None          NA
+     4     LR    None      None          NA
+                                                SatCrit.Warning
+          1                                                None
+          2 Flux limited by saturation assumption - consider LR
+          3                                                None
+          4                                                None
+# The chamber saturation assumption excluded the MSE optimal value of 'kappa', and HMR
+# therefore recommends 'LR'.
 
-# Analyse all data series with both linear regression and the
-# user selected analysis:
-HMR(filename='N2O.csv',LR.always=TRUE)
-
-# Produces the following (slightly edited) output:
-  Series         f0      f0.se       f0.p     f0.lo95    f0.up95 Method Warning...
-1    k0a 2.5968E+01 4.5356E+00 2.8500E-04  1.5708E+01 3.6229E+01    HMR    None...
-2    k0d 1.8720E+01 4.1881E+00 2.0842E-03  9.0617E+00 2.8377E+01    HMR    None...
-3   F1T3 2.1265E+02 3.6719E+01 1.1605E-03  1.2280E+02 3.0250E+02    HMR    None...
-4   F2T2 4.5093E+01 1.4702E+01 5.4691E-02 -1.6971E+00 9.1882E+01    HMR    None...
-5   F2V2 5.5853E+01 3.5905E+00 9.9703E-05  4.5884E+01 6.5822E+01     LR    None...
-
-...      LR.f0   LR.f0.se    LR.f0.p LR.f0.lo95 LR.f0.up95 LR.Warning
-... 8.9948E+00 1.1729E+00 1.7021E-05 6.3813E+00 1.1608E+01       None
-... 8.0045E+00 1.0199E+00 2.5776E-05 5.6974E+00 1.0312E+01       None
-... 5.0291E+01 9.9206E+00 1.4481E-03 2.6833E+01 7.3750E+01       None
-... 1.2259E+01 2.9792E+00 1.4675E-02 3.9872E+00 2.0531E+01       None
-... 5.5853E+01 3.5905E+00 9.9703E-05 4.5884E+01 6.5822E+01       None
-
-# The output is also exported to the semicolon-separated file
-# 'C:\My HMR applications\HMR - N2O.csv'. Hence, several analyses
-# of the same data file overwrites the output file, so to save a
-# particular output file it has to be renamed before the next
-# application of HMR to the same data file.
+# The output was in both HMR analyses above exported to the semicolon-separated file
+# named 'C:\My HMR applications\HMR - N2O.csv'. Hence, several analyses of the same
+# data file overwrites the output file, so to save a particular output file it has to
+# be renamed before the next HMR analysis of the same data file.
 }
 }
+
 \keyword{htest}
 \keyword{regression}
 \keyword{nonlinear}

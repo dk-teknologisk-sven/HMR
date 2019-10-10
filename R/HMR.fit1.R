@@ -1,134 +1,170 @@
-.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,LR.always,FollowHMR,JPG,PS,PHMR,npred,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter,kappa.fixed)
+.HMR.fit1<-function(tid,konc,A,V,serie,ngrid,SatPct,SatTimeMin,LR.always,FollowHMR,IfNoValidHMR,IfNoSignal,IfNoFlux,xtxt,ytxt,pcttxt,MSE.zero,bracketing.tol,bracketing.maxiter,kappa.fixed,pfvar,pfalpha,dec)
 {
   ### Stikprøvestørrelse
   n<-length(konc)
-  
+
   ### Kammerets effektive højde
   h<-V/A
 
-  ### HMR-analyse hvis "n>2"
-  if (n>2)
+  ### Test for 'signal/støj' i data
+  if (is.na(pfvar)) {SIGNVAR<-TRUE; prefilter<-'None'; pfpval<-NA} else
   {
-    ### "xOK(x)" returnerer "TRUE", hvis "x" ikke indeholder "NA", "-Inf" eller "Inf"; ellers "FALSE".
-    xOK<-function(x)
+    pfpval<-1-pchisq(q=(n-1)*var(konc)/pfvar,df=n-1); SIGNVAR<-(pfpval<pfalpha)
+    if (!SIGNVAR) {prefilter<-'Noise'} else {prefilter<-'Signal'}
+  }
+
+  ### Funktioner
+
+  ## Min version af 'sprintf'
+  mysprintf<-function(x)
+  {
+    if (!is.na(x))
     {
-      if (sum(is.na(x))>0) {OK<-FALSE} else {if (max(abs(x))==Inf) {OK<-FALSE} else {OK<-TRUE}}
-      OK
-    }
-    ### Min version af "lsfit", der afslører "collinearity", før det går galt.
-    # Benytter den "qr"-test, der benyttes som standard i R - f.eks. af "lsfit"
-    mylsfit<-function(x,y)
+      d<-unlist(strsplit(x=sprintf('%.3e',x),split='.',fixed=TRUE))
+      dum<-paste(d[1],d[2],sep=dec)
+    } else {dum<-'NA'}
+    dum
+  }
+
+  ## 'xOK(x)' returnerer 'TRUE', hvis 'x' ikke indeholder 'NA', '-Inf' eller 'Inf'; ellers 'FALSE'.
+  xOK<-function(x)
+  {
+    if (sum(is.na(x))>0) {OK<-FALSE} else {if (max(abs(x))==Inf) {OK<-FALSE} else {OK<-TRUE}}
+    OK
+  }
+
+  ## Min version af 'lsfit', der afslører 'collinearity', før det går galt.
+  # Benytter den 'qr'-test, der benyttes som standard i R - f.eks. af 'lsfit'
+  mylsfit<-function(x,y)
+  {
+    a11<-length(x); a12<-sum(x); a21<-a12; a22<-sum(x*x)
+    if (xOK(c(a11,a12,a21,a22)))
     {
-      a11<-length(x); a12<-sum(x); a21<-a12; a22<-sum(x*x)
-      if (xOK(c(a11,a12,a21,a22)))
+      XtX<-matrix(c(a11,a12,a21,a22),ncol=2,byrow=TRUE)
+      dum<-try(qr(XtX)$rank,silent=TRUE)
+      if ((class(dum)!='try-error')&(dum==2))
       {
-        XtX<-matrix(c(a11,a12,a21,a22),ncol=2,byrow=TRUE)
-        dum<-try(qr(XtX)$rank,silent=TRUE)
-        if ((class(dum)!='try-error')&(dum==2))
-        {
-          b<-as.numeric(lsfit(x,y,intercept=TRUE)$coef)
-          code<-1
-        } else {b<-NA; code<-0}
+        b<-as.numeric(lsfit(x,y,intercept=TRUE)$coef)
+        code<-1
       } else {b<-NA; code<-0}
-      list(coef=b,code=code)
-    }
-    ### Tester, om MSE kan beregnes.
-    testMSE<-function(logkappa)
+    } else {b<-NA; code<-0}
+    list(coef=b,code=code)
+  }
+
+  ## Tester, om MSE kan beregnes.
+  testMSE<-function(logkappa)
+  {
+    kappa<-exp(logkappa)
+    x<-exp(-kappa*tid)/(-kappa*h)
+    if (!xOK(x)) {ud<--1} else
     {
-      kappa<-exp(logkappa)
-      x<-exp(-kappa*tid)/(-kappa*h)
-      if (!xOK(x)) {ud<--1} else
+      dum<-mylsfit(x,konc)
+      if (dum$code>0)
       {
-        dum<-mylsfit(x,konc)
-        if (dum$code>0)
-        {
-          phi<-dum$coef[1]
-          f0<-dum$coef[2]
-          pkonc<-phi+f0*x
-          if (!xOK(mean((konc-pkonc)^2))) {ud<--1} else {ud<-1}
-        } else {ud<--1}
-      }
-      (ud>0)
+        phi<-dum$coef[1]
+        f0<-dum$coef[2]
+        pkonc<-phi+f0*x
+        if (!xOK(mean((konc-pkonc)^2))) {ud<--1} else {ud<-1}
+      } else {ud<--1}
     }
-    ### MSE uden sikkerhedsnet
-    MSE<-function(logkappa)
+    (ud>0)
+  }
+
+  ## MSE uden sikkerhedsnet
+  MSE<-function(logkappa)
+  {
+    kappa<-exp(logkappa)
+    x<-exp(-kappa*tid)/(-kappa*h)
+    dum<-mylsfit(x,konc)$coef
+    mean((konc-(dum[1]+dum[2]*x))^2)
+  }
+
+  ## MSE.list uden sikkerhedsnet
+  MSE.list<-function(logkappa)
+  {
+    kappa<-exp(logkappa)
+    x<-exp(-kappa*tid)/(-kappa*h)
+    dum<-mylsfit(x,konc)$coef
+    phi<-dum[1]
+    f0<-dum[2]
+    C0<-phi-(f0/kappa/h)
+    list(C0=C0,phi=phi,f0=f0,MSE=mean((konc-(dum[1]+dum[2]*x))^2))
+  }
+
+  ### Undersøger, om HMR kan anvendes (code=1; ellers code=0), og afgrænser i givet fald de mulige kappa-værdier
+  indramme<-function()
+  {
+    ## Grænser betinget af R
+    logkappa.lo<-log(max(.Machine$double.xmin/h,.Machine$double.xmin))
+    logkappa.up<-log(min(.Machine$double.xmax/h,.Machine$double.xmax))
+
+    ## Forsøger at gætte en 'fredelig' midterværdi
+    SUCCES<-TRUE
+    logkappa.me<-log(1/max(tid))
+    if (!testMSE(logkappa.me))
     {
-      kappa<-exp(logkappa)
-      x<-exp(-kappa*tid)/(-kappa*h)
-      dum<-mylsfit(x,konc)$coef
-      mean((konc-(dum[1]+dum[2]*x))^2)
-    }
-    ### MSE.list uden sikkerhedsnet
-    MSE.list<-function(logkappa)
-    {
-      kappa<-exp(logkappa)
-      x<-exp(-kappa*tid)/(-kappa*h)
-      dum<-mylsfit(x,konc)$coef
-      phi<-dum[1]
-      f0<-dum[2]
-      C0<-phi-(f0/kappa/h)
-      list(C0=C0,phi=phi,f0=f0,MSE=mean((konc-(dum[1]+dum[2]*x))^2))
-    }
-    ### Afgrænser de mulige kappa-værdier
-    indramme<-function()
-    {
-      # Grænser betinget af R
-      logkappa.lo<-log(max(.Machine$double.xmin/h,.Machine$double.xmin))
-      logkappa.up<-log(min(.Machine$double.xmax/h,.Machine$double.xmax))
-      # Forsøger at gætte en "fredelig" midterværdi
-      SUCCES<-TRUE
-      logkappa.me<-log(1/max(tid))
+      logkappa.me<-log(1/h)
       if (!testMSE(logkappa.me))
       {
-        logkappa.me<-log(1/h)
-        if (!testMSE(logkappa.me))
-        {
-          logkappa.me<-log(1)
-          if (!testMSE(logkappa.me)) {SUCCES<-FALSE}
-        }
+        logkappa.me<-log(1)
+        if (!testMSE(logkappa.me)) {SUCCES<-FALSE}
       }
-      # Fortsætter, hvis en midterværdi er fundet
+    }
+
+    ## Fortsætter, hvis en midterværdi er fundet
+    if (SUCCES)
+    {
+      # Finde 'kappa.lo'
+      if (!testMSE(logkappa.lo))
+      {
+        logk1<-logkappa.lo; logk2<-logkappa.me; logk<-(logk1+logk2)/2; iter<-1
+        while ((iter<bracketing.maxiter)&(abs(logk1-logk2)>bracketing.tol)) {if (testMSE(logk)) {logk2<-logk} else {logk1<-logk}; logk<-(logk1+logk2)/2; iter<-iter+1}
+        if (abs(logk1-logk2)<=bracketing.tol) {kappa.lo<-exp(logk2)} else {SUCCES<-FALSE; kappa.lo<-NA; kappa.up<-NA; code<-0}
+      } else {kappa.lo<-exp(logkappa.lo)}
+      # Finde 'kappa.up', hvis søgningen efter 'kappa.lo' lykkedes
       if (SUCCES)
       {
-        # Finde "kappa.lo"
-        if (!testMSE(logkappa.lo))
+        if (!testMSE(logkappa.up))
         {
-          logk1<-logkappa.lo; logk2<-logkappa.me; logk<-(logk1+logk2)/2; iter<-1
-          while ((iter<bracketing.maxiter)&(abs(logk1-logk2)>bracketing.tol)) {if (testMSE(logk)) {logk2<-logk} else {logk1<-logk}; logk<-(logk1+logk2)/2; iter<-iter+1}
-          if (abs(logk1-logk2)<=bracketing.tol) {kappa.lo<-exp(logk2)} else {SUCCES<-FALSE; kappa.lo<-NA; kappa.up<-NA; code<-0}
-        } else {kappa.lo<-exp(logkappa.lo)}
-        # Finde "kappa.up", hvis søgningen efter "kappa.lo" lykkedes
-        if (SUCCES)
-        {
-          if (!testMSE(logkappa.up))
-          {
-            logk1<-logkappa.me; logk2<-logkappa.up; logk<-(logk1+logk2)/2; iter<-1
-            while ((iter<bracketing.maxiter)&(abs(logk1-logk2)>bracketing.tol)) {if (testMSE(logk)) {logk1<-logk} else {logk2<-logk}; logk<-(logk1+logk2)/2; iter<-iter+1}
-            if (abs(logk1-logk2)<=bracketing.tol) {kappa.up<-exp(logk1); code<-1} else {SUCCES<-FALSE; kappa.lo<-NA; kappa.up<-NA; code<-0}
-          } else {kappa.up<-exp(logkappa.up); code<-1}
-        }
-      } else {kappa.lo<-NA; kappa.up<-NA; code<-0}
-      # Output
-      list(kappa.lo=kappa.lo,kappa.up=kappa.up,code=code)
-    }
-    ramme<-indramme()
-    # Ekstra test hvis "ramme$code=1" - findes der valide HM-modeller?
-    if (ramme$code>0)
-    {
-      logkappa<-seq(log(ramme$kappa.lo),log(ramme$kappa.up),l=ngrid)
-      vMSE<-rep(NA,ngrid); vcol<-rep(NA,ngrid)
-      for (i in 1:ngrid)
-      {
-        dum<-MSE.list(logkappa[i])
-        vMSE[i]<-dum$MSE
-        if ((dum$C0<=0)|(dum$phi<=0)) {vcol[i]<-2} else {vcol[i]<-3}
+          logk1<-logkappa.me; logk2<-logkappa.up; logk<-(logk1+logk2)/2; iter<-1
+          while ((iter<bracketing.maxiter)&(abs(logk1-logk2)>bracketing.tol)) {if (testMSE(logk)) {logk1<-logk} else {logk2<-logk}; logk<-(logk1+logk2)/2; iter<-iter+1}
+          if (abs(logk1-logk2)<=bracketing.tol) {kappa.up<-exp(logk1); code<-1} else {SUCCES<-FALSE; kappa.lo<-NA; kappa.up<-NA; code<-0}
+        } else {kappa.up<-exp(logkappa.up); code<-1}
       }
-      if (sum(vcol==3)==0) {ramme$code<-0}
-    }
-  } else {ramme<-list(code=0)}
+    } else {kappa.lo<-NA; kappa.up<-NA; code<-0}
 
-  ### Valg af dataanalyse
-  # Hvis HMR kan anvendes
+    ## Justerer 'kappa.up' i tilfælde af bruger-afgrænsning af 'kappa'
+    if ((code>0)&(!is.na(SatPct)))
+    {
+      kappa.up.user<-log(100/(100-SatPct))/SatTimeMin
+      SatCritActive<-(kappa.up.user<kappa.up)
+      kappa.up<-min(kappa.up,kappa.up.user)
+    } else {SatCritActive<-FALSE}
+
+    ## Output
+    list(kappa.lo=kappa.lo,kappa.up=kappa.up,code=code,SatCritActive=SatCritActive)
+  }
+
+  ## Basal afgrænsning
+  ramme<-indramme()
+
+  ## Ekstra test hvis 'ramme$code=1' - findes der valide HM-modeller?
+  if (ramme$code>0)
+  {
+    logkappa<-seq(log(ramme$kappa.lo),log(ramme$kappa.up),l=ngrid)
+    vMSE<-rep(NA,ngrid); vcol<-rep(NA,ngrid)
+    for (i in 1:ngrid)
+    {
+      dum<-MSE.list(logkappa[i])
+      vMSE[i]<-dum$MSE
+      if ((dum$C0<=0)|(dum$phi<=0)) {vcol[i]<-2} else {vcol[i]<-3}
+    }
+    if (sum(vcol==3)==0) {ramme$code<-0}
+  }
+
+  ### Brugerens valg af dataanalyse
+
+  ## Hvis HMR kan anvendes
   if (ramme$code>0)
   {
     # Global gittersøgning
@@ -157,7 +193,7 @@
       MSE.opt<-MSE.big
     } else
     {
-      # Find interval omkring "logkappa[big]" indenfor gitteret
+      # Find interval omkring 'logkappa[big]' indenfor gitteret
       lo.i<-big
       GREEN<-TRUE
       while ((lo.i>1)&(GREEN)) {lo.i<-lo.i-1; GREEN<-(vcol[lo.i]==3)}
@@ -176,28 +212,31 @@
         if (MSE.big<MSE.opt) {logkappa.opt<-logkappa.big; MSE.opt<-MSE.big}
       }
       # Kontrollere at optimum svarer til valid HM-model
-      EST<-MSE.list(logkappa.opt)  
+      EST<-MSE.list(logkappa.opt)
       if ((EST$C0<=0)|(EST$phi<=0)) {logkappa.opt<-logkappa.big; MSE.opt<-MSE.big}
     }
-    # Test for linearitet og manglende fit
-    maintext<-'HMR' # Det er kontrolleret ovenfor, at "logkappa.opt" svarer til valid HM-model
-    if (((vMSE[vcol==3][1]-MSE.big)<=MSE.zero)&((vMSE[vcol==3][length(vMSE[vcol==3])]-MSE.big)>MSE.zero))
+
+    ## Test for 'LR' og 'No flux'
+    MSEoptimal<-'HMR' # Det er kontrolleret ovenfor ('## Ekstra test...'), at 'logkappa.opt' svarer til valid HM-model
+    LR.mse<-vMSE[vcol==3][1]
+    NF.mse<-vMSE[vcol==3][length(vMSE[vcol==3])]
+    if (((LR.mse-MSE.big)<=MSE.zero)&((NF.mse-MSE.big)>MSE.zero))
     {
       EST<-as.numeric(lsfit(tid,konc)$coef)
-      if (EST[1]>0) {maintext<-'LR'} else {maintext<-'HMR'}
+      if (EST[1]>0) {MSEoptimal<-'LR'}
     }
-    if ((vMSE[vcol==3][length(vMSE[vcol==3])]-MSE.big)<=MSE.zero) {maintext<-'No flux/LR'}
-    # Valg af analyse
+    if ((NF.mse-MSE.big)<=MSE.zero) {MSEoptimal<-'No flux'}
+
+    ## Valg af analyse
     if (FollowHMR)
-    { # Bare kør løs!
-      if (maintext=='HMR') {dacode<-1} else
-        if (maintext=='LR') {dacode<-2} else {dacode<-3}
+    { # Egne fund gemt i 'MSEoptimal' samt brugerens automatiske valg i 'IfNoSignal' og 'IfNoFlux' (hvis begge relevante, har 'IfNoSignal' højst prioritet)
+      if (!SIGNVAR) {if (IfNoSignal=='LR') {dacode<-2} else {dacode<-3}} else
+        if (MSEoptimal=='HMR') {dacode<-1} else if (MSEoptimal=='LR') {dacode<-2} else if ((IfNoFlux=='No flux')&(!ramme$SatCritActive)) {dacode<-3} else {dacode<-2}
     } else
     { # Valg af analyse foretages af brugeren
       options(warn=-1)
       par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
-      plot(logkappa,vMSE,type='p',pch=16,col=vcol,xlab=expression(paste('Log(',kappa,')',sep='')),
-      ylab='MSE',main='MSE criterion')
+      plot(logkappa,vMSE,type='p',pch=16,col=vcol,xlab=expression(paste('Log(',kappa,')',sep='')),ylab='MSE',main='MSE criterion')
       points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
       lo<-max(logkappa.opt-log(2),log(ramme$kappa.lo))
       up<-min(logkappa.opt+log(2),log(ramme$kappa.up))
@@ -205,8 +244,7 @@
       if (length(x)>0)
       {
         y<-vMSE[(logkappa>=lo)&(logkappa<=up)]
-        plot(x,y,type='p',pch=16,col=vcol[(logkappa>=lo)&(logkappa<=up)],xlab=expression(paste('Log(',kappa,')',sep='')),
-        ylab='MSE',main='MSE criterion - zoom on HMR optimum')
+        plot(x,y,type='p',pch=16,col=vcol[(logkappa>=lo)&(logkappa<=up)],xlab=expression(paste('Log(',kappa,')',sep='')),ylab='MSE',main='MSE criterion - zoom on optimum')
         points(logkappa.opt,MSE.opt,type='p',pch=15,cex=1.5,col=4)
       } else
       {
@@ -217,11 +255,19 @@
         lines(c(1,1),c(0,1),lty=1,lwd=1,col=1)
         text(0.5,0.5,'Too few grid-points!',adj=0.5,col=2)
       }
-      ptid<-seq(0,max(tid),l=npred)
+      ptid<-seq(0,max(tid),l=1000)
       kappa<-exp(logkappa.opt); EST<-MSE.list(logkappa.opt); phi<-EST$phi; f0<-EST$f0; C0<-EST$C0
       x<-exp(-kappa*ptid)/(-kappa*h); pkonc.HMR<-phi+f0*x
-      maxy<-min(max(konc,C0),2*max(konc))
-      plot(c(0,max(tid)),c(min(konc,C0),maxy),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('Recommendation: ',maintext,sep=''))
+      maxx<-max(tid); miny<-min(konc,C0); maxy<-min(max(konc,C0),2*max(konc))
+      plot(c(0,maxx),c(miny,maxy),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('MSE criterion: ',MSEoptimal,sep=''))
+      if ((!SIGNVAR)&((ramme$SatCritActive)&(MSEoptimal=='No flux')))
+      {
+        text(0.95*maxx,miny+0.10*(maxy-miny),paste('Non-signif. signal, prefiltering p = ',mysprintf(pfpval),sep=''),adj=1,col=2)
+        text(0.95*maxx,miny+0.05*(maxy-miny),'Flux limited by saturation assumption - consider LR',adj=1,col=2)
+        
+      } else
+        if (!SIGNVAR) {text(0.95*maxx,miny+0.10*(maxy-miny),paste('Non-signif. signal, prefiltering p = ',mysprintf(pfpval),sep=''),adj=1,col=2)} else
+          if ((ramme$SatCritActive)&(MSEoptimal=='No flux')) {text(0.95*maxx,miny+0.05*(maxy-miny),'Flux limited by saturation assumption - consider LR',adj=1,col=2)}
       points(tid,konc,type='p',pch=16,cex=1.5)
       EST<-as.numeric(lsfit(tid,konc)$coef)
       pkonc.LR<-EST[1]+EST[2]*ptid
@@ -251,44 +297,27 @@
         if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
       }
       options(warn=0)
-      # JPG, PS
-      dum<-c(JPG,PS)
-      for (fig in 1:2)
-        if (dum[fig])
-        {
-          if (fig==1)
-            jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
-          else
-            postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
-          par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-          maxy<-min(max(konc,C0),2*max(konc))
-          plot(c(0,max(tid)),c(min(konc,C0),maxy),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': ',maintext,sep=''))
-          points(tid,konc,type='p',pch=16,cex=1.5)
-          lines(ptid,pkonc.HMR,lty=1,col=4)
-          lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-          lines(ptid,pkonc.NE,lty=2,col=1)
-          if (C0>max(konc)) {legend(median(tid),maxy,legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))} else
-          {legend(0,max(konc),legend=c('HMR','LR','No flux'),lty=c(1,1,2),col=c(4,colors()[498],1))}
-          dev.off()
-          par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
-        }
     }
   } else
-  # Hvis HMR ikke kan anvendes
+
+  ## Hvis HMR ikke kan anvendes
   {
+    MSEoptimal<-'None'
     # Valg af analyse
     if (FollowHMR)
-    { # Forsigtighedsprincip: No flux (dacode=3)
-      dacode<-3
+    { # Brugeren har valgt i 'IfNoValidHMR' og 'IfNoSignal' (hvis begge relevante, har 'IfNoSignal' højst prioritet)
+      if (SIGNVAR) {if (IfNoValidHMR=='LR') {dacode<-2} else {dacode<-3}} else
+      {if (IfNoSignal=='LR') {dacode<-2} else {dacode<-3}}
     } else
     { # Valg af analyse foretages af brugeren
       pframe<-function() {lines(c(0,1),c(0,0),lty=1,lwd=2,col=1); lines(c(0,1),c(1,1),lty=1,lwd=2,col=1); lines(c(0,0),c(0,1),lty=1,lwd=2,col=1); lines(c(1,1),c(0,1),lty=1,lwd=2,col=1)}
       par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
       plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion'); pframe()
       plot(0:1,0:1,type='n',axes=FALSE,xlab='',ylab='',main='MSE criterion - zoom on HMR optimum'); pframe()
-      plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')
+      if (SIGNVAR) {plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main='HMR could not be applied')} else
+      {plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste('HMR could not be applied (prefilter p=',mysprintf(pfpval),', noise)',sep=''))}
       points(tid,konc,type='p',pch=16,cex=1.5)
-      ptid<-seq(0,max(tid),l=npred)
+      ptid<-seq(0,max(tid),l=1000)
       EST<-as.numeric(lsfit(tid,konc)$coef)
       pkonc.LR<-EST[1]+EST[2]*ptid
       pkonc.NE<-rep(mean(konc),length(ptid))
@@ -311,29 +340,10 @@
         if ((pkt[1]>=0.1)&(pkt[1]<=0.45)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-3; VALGT<-TRUE} # No flux
         if ((pkt[1]>=0.55)&(pkt[1]<=0.9)&(pkt[2]>=0.1)&(pkt[2]<=0.3)) {dacode<-0; VALGT<-TRUE} # CANCEL
       }
-      # JPG, PS
-      dum<-c(JPG,PS)
-      for (fig in 1:2)
-        if (dum[fig])
-        {
-          if (fig==1)
-            jpeg(filename=paste(serie,'.jpg',sep=''),width=800,height=800,pointsize=12,quality=100)
-          else
-            postscript(file=paste(serie,'.ps',sep=''),horizontal=TRUE)
-          par(mfrow=c(1,1),oma=c(0,0,0,0),bty='n',pty='m')
-          plot(c(0,max(tid)),c(min(konc),max(konc)),type='n',cex=1.5,xlab=xtxt,ylab=ytxt,main=paste(serie,': HMR could not be applied',sep=''))
-          points(tid,konc,type='p',pch=16,cex=1.5)
-          lines(ptid,pkonc.LR,lty=1,col=colors()[498])
-          lines(ptid,pkonc.NE,lty=2,col=1)
-          legend(0,max(konc),legend=c('LR','No flux'),lty=c(1,2),col=c(colors()[498],1))
-          dev.off()
-          par(mfrow=c(2,2),oma=c(0,0,2,0),bty='n',pty='m')
-        }
     }
   }
 
   ### Datanalyse
-  PHMR.ptid<-NA; PHMR.pkonc<-NA
   if (dacode>0)
   {
     if (dacode==1)
@@ -344,12 +354,11 @@
       dum<-lsfit(x,konc)
       phi<-as.numeric(dum$coef)[1]
       f0.est<-as.numeric(dum$coef)[2]
-      if (PHMR) {PHMR.ptid<-seq(0,max(tid),l=npred); PHMR.pkonc<-phi+f0.est*(exp(-kappa*PHMR.ptid)/(-kappa*h))}
       if (kappa.fixed)
       {
         if (n>3)
         {
-          f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
+          f0.se<-ls.print(dum,digits=8,print.it=FALSE)$coef.table[[1]][2,2]
           f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
           fraktil<-qt(p=0.975,df=n-2)
           f0.lo95<-f0.est-fraktil*f0.se
@@ -414,7 +423,7 @@
         dum<-lsfit(tid/h,konc,intercept=TRUE)
         C0.est<-as.numeric(dum$coef[1])
         f0.est<-as.numeric(dum$coef[2])
-        f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
+        f0.se<-ls.print(dum,digits=8,print.it=FALSE)$coef.table[[1]][2,2]
         f0.p<-2*pt(q=-abs(f0.est/f0.se),df=n-2)
         fraktil<-qt(p=0.975,df=n-2)
         f0.lo95<-f0.est-fraktil*f0.se
@@ -428,7 +437,8 @@
       }
     }
   } else {f0.est<-NA; f0.se<-NA; f0.p<-NA; f0.lo95<-NA; f0.up95<-NA; method<-'None'; advarsel<-'Cancelled'}
-  # Hvis "LR.always"
+
+  ## Hvis 'LR.always'
   if (LR.always)
   {
     if (dacode==2)
@@ -444,7 +454,7 @@
       dum<-lsfit(tid/h,konc,intercept=TRUE)
       LR.C0<-as.numeric(dum$coef[1])
       LR.f0<-as.numeric(dum$coef[2])
-      LR.f0.se<-as.numeric(ls.diag(dum)$std.err)[2]
+      LR.f0.se<-ls.print(dum,digits=8,print.it=FALSE)$coef.table[[1]][2,2]
       LR.f0.p<-2*pt(q=-abs(LR.f0/LR.f0.se),df=n-2)
       LR.fraktil<-qt(p=0.975,df=n-2)
       LR.f0.lo95<-LR.f0-LR.fraktil*LR.f0.se
@@ -452,8 +462,16 @@
       if (LR.C0<=0) {LR.advarsel<-'C0<=0'} else {LR.advarsel<-'None'}
     }
   } else {LR.f0<-NA; LR.f0.se<-NA; LR.f0.p<-NA; LR.f0.lo95<-NA; LR.f0.up95<-NA; LR.advarsel<-NA}
-  
+
+  ### Kommentar vedr. mætningskriteriet ('No flux' gælder ikke, hvis 'SatCritActive')
+  if (is.na(SatPct)) {SatCritWarning<-NA} else
+    if ((MSEoptimal=='No flux')&(ramme$SatCritActive))
+    {
+      if (FollowHMR==TRUE) {SatCritWarning<-'Flux limited by saturation assumption - LR applied'} else {SatCritWarning<-'Flux limited by saturation assumption - consider LR'}
+    } else {SatCritWarning<-'None'}
+
   ### Output
-  list(serie=serie,f0=f0.est,f0.se=f0.se,f0.p=f0.p,f0.lo95=f0.lo95,f0.up95=f0.up95,PHMR.ptid=PHMR.ptid,PHMR.pkonc=PHMR.pkonc,
-  method=method,warning=advarsel,LR.f0=LR.f0,LR.f0.se=LR.f0.se,LR.f0.p=LR.f0.p,LR.f0.lo95=LR.f0.lo95,LR.f0.up95=LR.f0.up95,LR.warning=LR.advarsel)
+  if (FollowHMR) {cat(paste('Analyzed data series: ',serie,pcttxt,sep=''),sep='\n'); flush.console()}
+  list(serie=serie,f0=f0.est,f0.se=f0.se,f0.p=f0.p,f0.lo95=f0.lo95,f0.up95=f0.up95,method=method,warning=advarsel,prefilter=prefilter,pfpval=pfpval,SatCritWarning=SatCritWarning,
+  LR.f0=LR.f0,LR.f0.se=LR.f0.se,LR.f0.p=LR.f0.p,LR.f0.lo95=LR.f0.lo95,LR.f0.up95=LR.f0.up95,LR.warning=LR.advarsel)
 }

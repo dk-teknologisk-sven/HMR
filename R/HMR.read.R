@@ -2,7 +2,7 @@
 {
   ## Input
   ## -----
-  ## filename: En tekststreng indeholdende filnavnet. Det forudsættes, at datamappen i forvejen er sat med "setwd".
+  ## filename: En tekststreng indeholdende filnavnet. Det forudsættes, at datamappen i forvejen er sat med 'setwd'.
   ##           Datafilen skal være organiseret i fem kolonner og opfylde flg. betingelser:
   ##
   ##           1. Indholdet af 1. række ignoreres - kan evt. bruges til variabelnavne eller anden hjælpetekst.
@@ -22,7 +22,7 @@
   ## dec     : Decimaltegn.
   ## sep     : Søjleseparator.
 
-  ## Den basale indlæsning vha. "read.table"
+  ## Den basale indlæsning vha. 'read.table'
   ## ---------------------------------------
   Rdata<-try(read.table(file=filename,header=FALSE,skip=1,blank.lines.skip=TRUE,
   dec=dec,sep=sep,col.names=c('serie','V','A','tid','konc'),
@@ -31,16 +31,16 @@
   ## Yderligere kontrol af data  
   ## --------------------------
   ##
-  ## ANTAGELSE   : "serie" definerer dataserierne
+  ## ANTAGELSE   : 'serie' definerer dataserierne
   ##
   ## Kontrollerer:
   ##
-  ##   1. "V" og "A" er konstante indenfor "serie"
-  ##   2. Mindst 3 obs. af "V", "A", "tid" og "konc" indenfor "serie"
-  ##   3. Ingen "NA" i "V", "A", "tid" eller "konc"
-  ##   4. Ingen "Inf" eller "-Inf" i "V", "A", "tid" eller "konc"
-  ##   5. Ingen negative værdier i "V", "A" eller "konc"
-  ##   6. Værdierne af "tid" skal være positive og stigende
+  ##   1. 'V' og 'A' er konstante indenfor 'serie'
+  ##   2. Mindst 3 obs. af 'V', 'A', 'tid' og 'konc' indenfor 'serie'
+  ##   3. Ingen 'NA' i 'V', 'A', 'tid' eller 'konc'
+  ##   4. Ingen 'Inf' eller '-Inf' i 'V', 'A', 'tid' eller 'konc'
+  ##   5. Ingen negative værdier i 'V', 'A' eller 'konc'
+  ##   6. Værdierne af 'tid' skal være positive og stigende
   FATAL<-FALSE
   if (class(Rdata)=='try-error')
   {
@@ -64,25 +64,25 @@
       iV<-V[serie==userie[i]]
       iA<-A[serie==userie[i]]
       serieOK<-TRUE
-      # Mere end ét "V" eller "A"
+      # Mere end ét 'V' eller 'A'
       if ((length(unique(iV))>1)|(length(unique(iA))>1)) {serieOK<-FALSE} else
       {
         # Mindre end 3 obs.
         if ((length(itid)<3)|(length(ikonc)<3)|(length(iV)<3)|(length(iA)<3)) {serieOK<-FALSE} else
         {
-          # "NA" i numeriske variable
+          # 'NA' i numeriske variable
           if ((sum(is.na(itid))>0)|(sum(is.na(ikonc))>0)|(sum(is.na(iV))>0)|(sum(is.na(iA))>0)) {serieOK<-FALSE} else
           {
-            # "Inf" eller "-Inf" i numeriske variable
+            # 'Inf' eller '-Inf' i numeriske variable
             if ((max(abs(itid))==Inf)|(max(abs(ikonc))==Inf)|(max(abs(iV))==Inf)|(max(abs(iA))==Inf)) {serieOK<-FALSE} else
             {
-              # Ikke-positive værdier af "V", "A", "konc" eller "tid"
+              # Ikke-positive værdier af 'V', 'A', 'konc' eller 'tid'
               if ((min(iV)<=0)|(min(iA)<=0)|(min(ikonc)<=0)|(min(itid)<0)) {serieOK<-FALSE} else
               {
-                # "tid" er ikke-stigende
+                # 'tid' er ikke-stigende
                 if (min(itid[-1]-itid[-length(itid)])<=0) {serieOK<-FALSE} else
                 {
-                  # Data "userie[i]" er OK!
+                  # Data 'userie[i]' er OK!
                   HMRdata[[i]]<-list(serie=userie[i],V=unique(iV),A=unique(iA),tid=itid,konc=ikonc,status=1) # status=0: fejl, status=1: OK
                 }
               }
@@ -90,7 +90,7 @@
           }
         }
       }
-      # Hvis "userie[i]" indeholder fejl
+      # Hvis 'userie[i]' indeholder fejl
       if (!serieOK) {nfejlserie<-nfejlserie+1; HMRdata[[i]]<-list(serie=userie[i],status=0)}
     }
     # Hvis fejl i alle serier
