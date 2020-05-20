@@ -169,7 +169,11 @@ Although users are encouraged to do sequentially user selection of model for flu
 configured by the user through options \code{IfNoValidHMR}, \code{IfNoFlux} and \code{IfNoSignal} (cf. above). Note that \code{IfNoSignal} has
 precedence over \code{IfNoValidHMR} and \code{IfNoFlux} when relevant, and that \code{'LR'} is selected irrespective of the user selection for
 \code{IfNoFlux} if flux limiting is active, ie. the globally optimal value of \eqn{\kappa} according to the MSE criterion is larger than the
-user specfified maximal value of \eqn{\kappa} (whereby the MSE criterion recommends \code{'No flux'}).
+user specfified maximal value of \eqn{\kappa} (whereby the MSE criterion recommends \code{'No flux'}). \emph{The automatic HMR decision tree with
+option \code{FollowHMR=TRUE} is illustrated in the figure below (only visible with HTML help, \code{help(HMR,help_type='html')}, and in the PDF
+manual).}
+\if{html}{\figure{HMRtree.png}{options: width="70\%" alt="Figure: HMRtree.png"}}
+\if{latex}{\figure{HMRtree.pdf}{options: width=14cm}}
 } % HMR automatic selection of analysis
 
 \subsection{HMR data processing order}{

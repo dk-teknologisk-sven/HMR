@@ -1,45 +1,46 @@
 HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=NA,pfalpha=0.05,LR.always=FALSE,FollowHMR=FALSE,IfNoValidHMR='No flux',IfNoFlux='No flux',IfNoSignal='No flux',Display.Message=TRUE)
 {
-  ## Version 1.0.0 starter med denne besked
+  ## Version 1.0.1 starter med denne besked
   HMRmessage<-function()
   {
     cat('',fill=TRUE)
     cat('***************************************************************************',fill=TRUE)
-    cat('*****       HMR version 1.0.0 comes with important new features       *****',fill=TRUE)
+    cat('*****       HMR version 1.0.1 comes with important new features       *****',fill=TRUE)
     cat('***************************************************************************',fill=TRUE)
     cat('',fill=TRUE)
     cat('Flux limiting',fill=TRUE)
     cat('-------------',fill=TRUE)
-    cat('The family of non-linear HMR models is clearly too large as any kappa>0',fill=TRUE)
-    cat('is permissible although large values correspond to huge and unrealistic',fill=TRUE)
-    cat('fluxes. A priori, however, no upper limit for kappa can be provided, but',fill=TRUE)
-    cat('sensible upper limits can be computed from assumptions about the earliest',fill=TRUE)
-    cat('time for chamber saturation. In particular, this may be important with',fill=TRUE)
-    cat('small data series, where random patterns in data may exhibit strong',fill=TRUE)
-    cat('exponential curvature and, erronesouly, produce huge fluxes.',fill=TRUE)
+    cat('The general family of non-linear HMR models is clearly too large as any',fill=TRUE)
+    cat('kappa>0 is permissible, although large values correspond to huge and',fill=TRUE)
+    cat('unrealistic fluxes. A priori, however, no upper limit for kappa can be',fill=TRUE)
+    cat('provided, but interpretable upper limits can be computed from assumptions',fill=TRUE)
+    cat('about the *earliest time for chamber saturation*. This may, particularly,',fill=TRUE)
+    cat('be important with small data series, where random patterns in data may',fill=TRUE)
+    cat('exhibit strong exponential curvature and, erronesouly, produce huge fluxes.',fill=TRUE)
     cat('',fill=TRUE)
     cat('Prefiltering',fill=TRUE)
     cat('------------',fill=TRUE)
     cat('A statistical prefiltering test is applied before actual HMR data analysis',fill=TRUE)
     cat('in order to detect data series that are compatible with pure measurement',fill=TRUE)
-    cat('variation and no flux. These may important to detect in order to avoid',fill=TRUE)
-    cat('flux estimation bias.',fill=TRUE)
+    cat('variation and hence no flux. These may important to detect in order to',fill=TRUE)
+    cat('avoid flux estimation bias.',fill=TRUE)
     cat('',fill=TRUE)
     cat('Automatic model selection',fill=TRUE)
     cat('-------------------------',fill=TRUE)
     cat('Options for user configured automatic model selection are provided. These',fill=TRUE)
-    cat('include controls for consistent automatic handling of HMR recommendations',fill=TRUE)
-    cat('based on the MSE criterion, prefiltering outcomes, flux limitations and',fill=TRUE)
-    cat('their interactions.',fill=TRUE)
+    cat('include controls for automatic handling of HMR recommendations from the',fill=TRUE)
+    cat('MSE criterion, prefiltering outcomes and flux limiting. Type R command',fill=TRUE)
+    cat('help(HMR,help_type=\'html\') for an overview over the user configured',fill=TRUE)
+    cat('decision tree for automatic model selection with HMR.',fill=TRUE)
     cat('',fill=TRUE)
     cat('NOTES',fill=TRUE)
     cat('-----',fill=TRUE)
-    cat('* Details can be found in the PDF manual or the help menu.',fill=TRUE)
+    cat('* Details in the PDF manual and the help page (preferably HMTL).',fill=TRUE)
     cat('* Suppress this message by option "Display.Message=FALSE".',fill=TRUE)
     cat('',fill=TRUE)
   }
 
-  ## Besked om version 1.0.0
+  ## Besked om version 1.0.1
   if (Display.Message) {HMRmessage(); flush.console()}
 
   ## Input
@@ -61,7 +62,7 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
   ## IfNoValidHMR   : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og der ikke kan foretages HM-analyse. Default: 'No flux'.
   ## IfNoFlux       : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og MSE-kriteriet siger 'No flux'. Default: 'No flux'.
   ## IfNoSignal     : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og 'prefiltering'-testet siger 'noise'. Default: 'No flux'.
-  ## Display.Message: Version 1.0.0 starter med en besked, der kan fravælges her (Display.Message=FALSE). Default: TRUE.
+  ## Display.Message: Version 1.0.1 starter med en besked, der kan fravælges her (Display.Message=FALSE). Default: TRUE.
 
   ## Parametre - man pt. ikke kan ændre
   ## ----------------------------------
