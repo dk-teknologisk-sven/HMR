@@ -42,7 +42,7 @@
   ##   5. Ingen negative værdier i 'V', 'A' eller 'konc'
   ##   6. Værdierne af 'tid' skal være positive og stigende
   FATAL<-FALSE
-  if (class(Rdata)=='try-error')
+  if (inherits(Rdata,'try-error'))
   {
     # Elementære datafejl
     FATAL<-TRUE; HMRdata<-NA; nserie<-NA

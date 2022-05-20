@@ -42,7 +42,7 @@
     {
       XtX<-matrix(c(a11,a12,a21,a22),ncol=2,byrow=TRUE)
       dum<-try(qr(XtX)$rank,silent=TRUE)
-      if ((class(dum)!='try-error')&(dum==2))
+      if ((!inherits(dum,'try-error'))&(dum==2))
       {
         b<-as.numeric(lsfit(x,y,intercept=TRUE)$coef)
         code<-1
@@ -388,7 +388,7 @@
           s2<-sum((konc-phi-f0.est*x)*(konc-phi-f0.est*x))/(n-3)
           O<-matrix(c(O11,O12,O13,O21,O22,O23,O31,O32,O33),nrow=3,ncol=3,byrow=TRUE)/s2
           tjek<-try(solve(O),silent=TRUE)
-          if (class(tjek)!='try-error')
+          if (!inherits(tjek,'try-error'))
           {
             f0.se<-sqrt(solve(O)[2,2])
             f0seOK<-TRUE
