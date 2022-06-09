@@ -89,7 +89,7 @@ instead recommends the corresponding limiting model for flux estimation, ie. \co
 cases, the estimation uncertainty in the estimate of \eqn{\kappa} (zero or infinity) is not reflected in the standard error of the estimated
 flux (nor the 95\%-confidence interval or the p-value) implying a discontinuity when going from very small/large estimated values of \eqn{\kappa}
 in the non-linear model (\code{'HMR'}) to the limiting linear (\code{'LR'}) or constant model (\code{'No flux'}).
-} % Afslutning på 'HMR basic methodology'
+} % Afslutning p? 'HMR basic methodology'
 
 \subsection{HMR flux limiting}{
 The family of non-linear HMR models is clearly too large as all values of \eqn{\kappa>0} are permissible and large values of \eqn{\kappa} may
@@ -112,7 +112,7 @@ saturation fraction (in \%) and the assumed earliest time-point for the saturati
 the globally optimal value of \eqn{\kappa} according to the MSE criterion is larger than the user specfified maximal value of \eqn{\kappa}
 (whereby the MSE criterion recommends \code{'No flux'}), then \code{'LR'} should be considered for estimating the flux as the mathematical
 justification for \code{'No flux'} is violated.
-} % Afslutning på 'HMR flux limiting'
+} % Afslutning p? 'HMR flux limiting'
 
 \subsection{HMR data prefiltering}{
 The MSE criterion is unable to detect if the variation in chamber concentrations is low relative to the variation in data that can be expected
@@ -149,7 +149,7 @@ series will be classified as \code{'Noise'}.
 
 \eqn{\; \; \; \; \; } Prefiltering with HMR is controlled by options \code{pfvar} and \code{pfalpha} that specify \eqn{\sigma^2_0} and
 \eqn{\alpha}, respectively.
-} % Afslutning på 'HMR prefiltering'
+} % Afslutning p? 'HMR prefiltering'
 
 \subsection{HMR user selection of analysis}{
 To assist the user in selecting the appropriate method for flux estimation for a given data series, the HMR function displays -- organised
@@ -182,7 +182,7 @@ supported by results from the prefiltering test if selected, and automatic model
 \code{IfNoValidHMR} and \code{IfNoSignal}. If valid HMR models can be fitted, the range of values of \eqn{\kappa} is potentielly further limited
 by user selected flux limiting assumptions. User selection of models is then supported by the prefiltering and flux limiting methods, if selected,
 whereas automatic model selection is controlled by the user specified values of \code{IfNoFlux} and \code{IfNoSignal}.
-} % Afslutning på 'HMR data processing order'
+} % Afslutning p? 'HMR data processing order'
 
 \subsection{HMR data files}{
 HMR data files are semicolon or comma separated files organised in five columns with, respectively, the \emph{data series names}, \emph{chamber
@@ -245,7 +245,7 @@ Apart from the required header (with optional ASCII character content), the five
   strictly positive. In the sample data above, the fifth column contains measured nitrous oxide concentrations [\eqn{\mu g/L}].}
 }
 Missing values (\code{NA}'s) or empty lines or columns are not allowed in HMR data files.
-} % Afslutning på 'HMR data files'
+} % Afslutning p? 'HMR data files'
 
 \subsection{HMR data and flux physical units}{
 For maximal flexibility, HMR has no requirements for the physical units of input data. The chosen units do, however, determine the unit of
@@ -256,8 +256,8 @@ Some examples:
 \eqn{V} \eqn{[L]},   \eqn{A} \eqn{[m^2]},  \eqn{t} \eqn{[min]}, \eqn{C} \eqn{[\mu L/L]} \tab \eqn{\Rightarrow} \tab \eqn{f_0} \eqn{[\mu L/m^2/min]} \cr
 \eqn{V} \eqn{[m^2]}, \eqn{A} \eqn{[km^2]}, \eqn{t} \eqn{[s]},   \eqn{C} \eqn{[kg/m^3] } \tab \eqn{\Rightarrow} \tab \eqn{f_0} \eqn{[kg/km^2/s]}
 }
-} % Afslutning på 'HMR data and flux units'
-} %% Afslutningen på \details
+} % Afslutning p? 'HMR data and flux units'
+} %% Afslutningen p? \details
 
 \value{
 HMR first examines the specified function arguments. If problems are detected, HMR halts and issues the comment \code{'Error in input parameters'}. Rules
@@ -304,16 +304,12 @@ Pedersen, A.R., Petersen, S.O. and Schelde, K. (2010): A comprehensive approach 
 
 \examples{
 \dontrun{
-# Suppose the sample data above are located on a Windows machine in the file
-# 'C:\My HMR applications\N2O.csv'
-
-# Start by setting the data file folder:
-setwd('C:/My HMR applications')
-
-# Notice that R uses '/' in folder declarations, whereas Windows uses '\'.
+# The sample data above is included in the package as a csv file('four_HMR_series.csv') whose 
+path can be obtained from the following command:
+four_series_data_path <- HMR_example()
 
 # Analyse all data series with default settings:
-HMR(filename='N2O.csv')
+HMR(filename=four_series_data_path)
 
 # Produces the following (slightly edited) output when HMR recommendations are followed:
   Series        f0     f0.se      f0.p    f0.lo95   f0.up95
@@ -330,10 +326,10 @@ HMR(filename='N2O.csv')
 # whereas the 'LR' analysis was recommended for the fourth.
 
 # The output was also exported to the semicolon-separated file:
-# 'C:\My HMR applications\HMR - N2O.csv'
+# 'HMR - four_HMR_series.csv'
 
 # Analyse all data series with flux limiting assuming 90\% chamber saturation not before 60 minutes:
-HMR(filename='N2O.csv',SatPct=90,SatTimeMin=60)
+HMR(filename=four_series_data_path,SatPct=90,SatTimeMin=60)
 
 # Produces the following (slightly edited) output when HMR recommendations are followed:
   Series        f0     f0.se      f0.p    f0.lo95   f0.up95
@@ -355,7 +351,7 @@ HMR(filename='N2O.csv',SatPct=90,SatTimeMin=60)
 # therefore recommends 'LR'.
 
 # The output was in both HMR analyses above exported to the semicolon-separated file
-# named 'C:\My HMR applications\HMR - N2O.csv'. Hence, several analyses of the same
+# named 'HMR - N2O.csv'. Hence, several analyses of the same
 # data file overwrites the output file, so to save a particular output file it has to
 # be renamed before the next HMR analysis of the same data file.
 }

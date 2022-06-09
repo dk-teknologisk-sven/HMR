@@ -1,4 +1,5 @@
 export(HMR)
+export(HMR_example)
 
 importFrom(utils, write.table, read.table, flush.console)
 importFrom(graphics, par, plot, points, lines, text, legend, polygon, mtext, locator, frame)

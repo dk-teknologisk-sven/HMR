@@ -45,34 +45,34 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
 
   ## Input
   ## -----
-  ## filename       : En tekststreng indeholdende filnavnet. Det forudsættes, at datamappen i forvejen er sat med 'setwd'.
+  ## filename       : En tekststreng indeholdende filnavnet. Det foruds?ttes, at datamappen i forvejen er sat med 'setwd'.
   ##                  Outputtet fra HMR gemmes i en tekstfil med 'HMR - ' foranstillet.
-  ## series         : En vektor indeholdende navnene på de serier i datafilen, for hvilke der ønskes en HMR-analyse. Hvis 'series=NA',
+  ## series         : En vektor indeholdende navnene p? de serier i datafilen, for hvilke der ?nskes en HMR-analyse. Hvis 'series=NA',
   ##                  eller 'series' indeholder et 'NA', analyseres hele datafilen.
-  ## dec            : Decimaltegn på datafilen, '.' eller ','. Default: '.'.
-  ## sep            : Kolonneseparatoren på datafilen, ';' eller ','. Default: ';'.
-  ## SatPct,        : De mulige værdier af 'kappa' kan afgrænses opadtil ved at angive en mætningsprocent, 'SatPct', samt et tidspunkt for dens
-  ## SatTimeMin       tidligste indtræffen, 'SatTimeMin'. Altså: Man afgrænser 'kappa' ved at hævde, at mætning 'SatPct' tidligst indtræffer til
-  ##                  tidspunkt 'SatTimeMin'. Default for begge er 'NA' svarende til ingen afgrænsning af 'kappa'.
-  ## pfvar          : Variansen på målinger fra et sted uden flux. Bruges til frafiltrering ('prefiltering') af serier uden 'signal'.
-  ##                  Man kan fravælge filtreringen ved at vælge 'NA'. Default: 'NA'.
+  ## dec            : Decimaltegn p? datafilen, '.' eller ','. Default: '.'.
+  ## sep            : Kolonneseparatoren p? datafilen, ';' eller ','. Default: ';'.
+  ## SatPct,        : De mulige v?rdier af 'kappa' kan afgr?nses opadtil ved at angive en m?tningsprocent, 'SatPct', samt et tidspunkt for dens
+  ## SatTimeMin       tidligste indtr?ffen, 'SatTimeMin'. Alts?: Man afgr?nser 'kappa' ved at h?vde, at m?tning 'SatPct' tidligst indtr?ffer til
+  ##                  tidspunkt 'SatTimeMin'. Default for begge er 'NA' svarende til ingen afgr?nsning af 'kappa'.
+  ## pfvar          : Variansen p? m?linger fra et sted uden flux. Bruges til frafiltrering ('prefiltering') af serier uden 'signal'.
+  ##                  Man kan frav?lge filtreringen ved at v?lge 'NA'. Default: 'NA'.
   ## pfalpha        : Risikoen for type I fejl i 'prefiltering'-testet. Default: 0.05.
-  ## LR.always      : Hvis TRUE, udføres altid LR i tilføjelse til den analyse, brugeren har valgt. Default: FALSE.
-  ## FollowHMR      : Hvis TRUE, annulleres brugerens valg af analyse, og HMR's anbefalinger følges. Default: FALSE.
+  ## LR.always      : Hvis TRUE, udf?res altid LR i tilf?jelse til den analyse, brugeren har valgt. Default: FALSE.
+  ## FollowHMR      : Hvis TRUE, annulleres brugerens valg af analyse, og HMR's anbefalinger f?lges. Default: FALSE.
   ## IfNoValidHMR   : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og der ikke kan foretages HM-analyse. Default: 'No flux'.
   ## IfNoFlux       : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og MSE-kriteriet siger 'No flux'. Default: 'No flux'.
   ## IfNoSignal     : Automatisk valg af metode ('LR'/'No flux'), hvis 'FollowHMR=TRUE', og 'prefiltering'-testet siger 'noise'. Default: 'No flux'.
-  ## Display.Message: Version 1.0.1 starter med en besked, der kan fravælges her (Display.Message=FALSE). Default: TRUE.
+  ## Display.Message: Version 1.0.1 starter med en besked, der kan frav?lges her (Display.Message=FALSE). Default: TRUE.
 
-  ## Parametre - man pt. ikke kan ændre
+  ## Parametre - man pt. ikke kan ?ndre
   ## ----------------------------------
-  ## MSE.zero          : Bagatelgrænse for MSE. Default er 10 gange regnenøjagtigheden.
-  ## bracketing.tol    : Konvergenskriterium i søgningen efter det maksimale kappa-interval. Default: 1e-7.
+  ## MSE.zero          : Bagatelgr?nse for MSE. Default er 10 gange regnen?jagtigheden.
+  ## bracketing.tol    : Konvergenskriterium i s?gningen efter det maksimale kappa-interval. Default: 1e-7.
   ## bracketing.maxiter: Ditto. Default: 1000.
-  ## ngrid             : Antal punkter i gittersøgninger. Skal være mindst 100. Default: 1000.
+  ## ngrid             : Antal punkter i gitters?gninger. Skal v?re mindst 100. Default: 1000.
   ## xtxt              : Tekst ved x-aksen.
   ## ytxt              : Tekst ved y-aksen.
-  ## kappa.fixed       : Hvis TRUE, indregnes estimationsusikkerheden for 'kappa' ikke i standard error for fluxen; ellers gør den.
+  ## kappa.fixed       : Hvis TRUE, indregnes estimationsusikkerheden for 'kappa' ikke i standard error for fluxen; ellers g?r den.
   MSE.zero<-10*max(.Machine$double.eps,.Machine$double.neg.eps)
   bracketing.tol<-1e-7
   bracketing.maxiter<-1000
@@ -101,15 +101,15 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
   }
 
   ## Kontrollerer for fejl i input
-  ##   1. 'filename' skal være en tekststreng af længde én. Om den peger på en eksisterende fil, overlades til R.
-  ##   2. 'series' skal være en ikke-tom tekststreng eller 'NA'.
-  ##   3. 'dec' skal være '.' eller ','.
-  ##   4. 'sep' skal være ';' eller ','. 
-  ##   5. 'dec' og 'sep' må ikke begge være ','.
-  ##   6. 'LR.always', 'FollowHMR' og 'Display.Message' skal være 'TRUE' eller 'FALSE'.
-  ##   7. 'pfalpha' skal tilhøre (0,1) og 'pfvar' skal være postiv eller 'NA'.
-  ##   8. 'IfNoValidHMR', 'IfNoSignal' og 'IfNoFlux' skal være 'LR' eller 'No flux'
-  ##   9. 'SatPct' og 'SatTimeMin' skal enten begge være 'NA' eller tilhøre hhv. (0,100) og (0,uendelig).
+  ##   1. 'filename' skal v?re en tekststreng af l?ngde ?n. Om den peger p? en eksisterende fil, overlades til R.
+  ##   2. 'series' skal v?re en ikke-tom tekststreng eller 'NA'.
+  ##   3. 'dec' skal v?re '.' eller ','.
+  ##   4. 'sep' skal v?re ';' eller ','. 
+  ##   5. 'dec' og 'sep' m? ikke begge v?re ','.
+  ##   6. 'LR.always', 'FollowHMR' og 'Display.Message' skal v?re 'TRUE' eller 'FALSE'.
+  ##   7. 'pfalpha' skal tilh?re (0,1) og 'pfvar' skal v?re postiv eller 'NA'.
+  ##   8. 'IfNoValidHMR', 'IfNoSignal' og 'IfNoFlux' skal v?re 'LR' eller 'No flux'
+  ##   9. 'SatPct' og 'SatTimeMin' skal enten begge v?re 'NA' eller tilh?re hhv. (0,100) og (0,uendelig).
 
   # Kontrollerer 'filename'
   if ((length(filename)!=1)|(!is.character(filename))) {FATAL<-TRUE} else
@@ -162,28 +162,28 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
     }
   }
 
-  ## Kan vi fortsætte?
+  ## Kan vi forts?tte?
   if (FATAL)
   {
     Comment<-'Error in input parameters'
   } else
   {
-    ## Dataindlæsning
+    ## Dataindl?sning
     oldOutDec<-getOption('OutDec'); options(OutDec=dec)
     testread<-.HMR.read(filename=filename,dec=dec,sep=sep)
     options(OutDec=oldOutDec)
-    if (testread$FATAL) # Data kunne ikke indlæses
+    if (testread$FATAL) # Data kunne ikke indl?ses
     {
       FATAL<-TRUE
       Comment<-'Data file could not be read'
-    } else # Data kunne indlæses
+    } else # Data kunne indl?ses
     {
-      # Alle dataserier eller en delmængde?
+      # Alle dataserier eller en delm?ngde?
       dataserier<-rep(NA,testread$nserier); for (i in 1:testread$nserier) dataserier[i]<-testread$HMRdata[[i]]$serie
       if ((sum(is.na(series))==1)&(length(series)==1)) {userie<-dataserier} else {userie<-unique(series)}
       # Findes 'userie' i datafilen og i givet fald hvor?
-      # 'status=0': Hvis serien ikke findes på datafilen, eller hvis 'HMR.read' har fundet fejl i dataserien.
-      # 'status=1': Dataserien findes på datafilen, og 'HMR.read' har ikke fundet fejl i den.
+      # 'status=0': Hvis serien ikke findes p? datafilen, eller hvis 'HMR.read' har fundet fejl i dataserien.
+      # 'status=1': Dataserien findes p? datafilen, og 'HMR.read' har ikke fundet fejl i den.
       nserie<-length(userie)
       HMRdata<-vector(mode='list',length=nserie)
       nJA<-0
@@ -191,7 +191,7 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
       {
         if (sum(dataserier==userie[i])>0)
         {
-          datai<-min((1:length(dataserier))[dataserier==userie[i]]) # 'min' er sikkert overflødig
+          datai<-min((1:length(dataserier))[dataserier==userie[i]]) # 'min' er sikkert overfl?dig
           if (testread$HMRdata[[datai]]$status>0) {nJA<-nJA+1; HMRdata[[i]]<-testread$HMRdata[[datai]]} else {HMRdata[[i]]<-list(serie=userie[i],status=0)}
         } else {HMRdata[[i]]<-list(serie=userie[i],status=0)}
       }
@@ -203,7 +203,7 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
       } else
       # Analyserer fundne data
       {
-        # Starter/tømmer grafisk vindue
+        # Starter/t?mmer grafisk vindue
         frame()
         # Gemmer 'par' options
         oldmfrow<-par('mfrow'); oldoma<-par('oma'); oldbty<-par('bty'); oldpty<-par('pty')
@@ -211,13 +211,13 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
         if (LR.always)
         {
           OUTPUT<-data.frame(Series='',f0=0,f0.se=0,f0.p=0,f0.lo95=0,f0.up95=0,Method='',Warning='',Prefilter='',Prefilter.p=0,SatCrit.Warning='',
-          LR.f0=0,LR.f0.se=0,LR.f0.p=0,LR.f0.lo95=0,LR.f0.up95=0,LR.Warning='',stringsAsFactors=FALSE)
+          LR.f0=0,LR.f0.se=0,LR.f0.p=0,LR.f0.lo95=0,LR.f0.up95=0,LR.Warning='',HMR_h=0,HMR_kappa=0,HMR_f0=0,HMR_phi=0,stringsAsFactors=FALSE)
           colnames(OUTPUT)<-c('Series','f0','f0.se','f0.p','f0.lo95','f0.up95','Method','Warning','Prefilter','Prefilter.p','SatCrit.Warning',
-          'LR.f0','LR.f0.se','LR.f0.p','LR.f0.lo95','LR.f0.up95','LR.Warning')
+          'LR.f0','LR.f0.se','LR.f0.p','LR.f0.lo95','LR.f0.up95','LR.Warning','HMR.h','HMR.kappa','HMR.f0','HMR.phi')
         } else
         {
-          OUTPUT<-data.frame(Series='',f0=0,f0.se=0,f0.p=0,f0.lo95=0,f0.up95=0,Method='',Warning='',Prefilter='',Prefilter.p=0,SatCrit.Warning='',stringsAsFactors=FALSE)
-          colnames(OUTPUT)<-c('Series','f0','f0.se','f0.p','f0.lo95','f0.up95','Method','Warning','Prefilter','Prefilter.p','SatCrit.Warning')
+          OUTPUT<-data.frame(Series='',f0=0,f0.se=0,f0.p=0,f0.lo95=0,f0.up95=0,Method='',Warning='',Prefilter='',Prefilter.p=0,SatCrit.Warning='',HMR_h=0,HMR_kappa=0,HMR_f0=0,HMR_phi=0,stringsAsFactors=FALSE)
+          colnames(OUTPUT)<-c('Series','f0','f0.se','f0.p','f0.lo95','f0.up95','Method','Warning','Prefilter','Prefilter.p','SatCrit.Warning','HMR.h','HMR.kappa','HMR.f0','HMR.phi')
         }
         STOP<-FALSE
         for (i in 1:nserie) if (!STOP)
@@ -229,21 +229,21 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
             ngrid=ngrid,SatPct=SatPct,SatTimeMin=SatTimeMin,LR.always=LR.always,FollowHMR=FollowHMR,IfNoValidHMR=IfNoValidHMR,IfNoSignal=IfNoSignal,IfNoFlux=IfNoFlux,xtxt=xtxt,ytxt=ytxt,
             pcttxt=paste(' (',round(100*i/nserie,0),'%)',sep=''),MSE.zero=MSE.zero,bracketing.tol=bracketing.tol,bracketing.maxiter=bracketing.maxiter,kappa.fixed=kappa.fixed,
             pfvar=pfvar,pfalpha=pfalpha,dec=dec)
-            if (LR.always)
+            if (LR.always) #HMR_h=0,HMR_kappa=0,HMR_f0=0,HMR_phi=0
               OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,mysprintf(oHMR$f0),mysprintf(oHMR$f0.se),mysprintf(oHMR$f0.p),mysprintf(oHMR$f0.lo95),
               mysprintf(oHMR$f0.up95),oHMR$method,oHMR$warning,oHMR$prefilter,mysprintf(oHMR$pfpval),oHMR$SatCritWarning,mysprintf(oHMR$LR.f0),mysprintf(oHMR$LR.f0.se),mysprintf(oHMR$LR.f0.p),
-              mysprintf(oHMR$LR.f0.lo95),mysprintf(oHMR$LR.f0.up95),oHMR$LR.warning))
+              mysprintf(oHMR$LR.f0.lo95),mysprintf(oHMR$LR.f0.up95),oHMR$LR.warning,mysprintf(oHMR$HMR_h),mysprintf(oHMR$HMR_kappa),mysprintf(oHMR$HMR_f0),mysprintf(oHMR$HMR_phi)))
             else
               OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,mysprintf(oHMR$f0),mysprintf(oHMR$f0.se),mysprintf(oHMR$f0.p),mysprintf(oHMR$f0.lo95),
-              mysprintf(oHMR$f0.up95),oHMR$method,oHMR$warning,oHMR$prefilter,mysprintf(oHMR$pfpval),oHMR$SatCritWarning))
+              mysprintf(oHMR$f0.up95),oHMR$method,oHMR$warning,oHMR$prefilter,mysprintf(oHMR$pfpval),oHMR$SatCritWarning,mysprintf(oHMR$HMR_h),mysprintf(oHMR$HMR_kappa),mysprintf(oHMR$HMR_f0),mysprintf(oHMR$HMR_phi)))
             if (oHMR$warning=='Cancelled') {STOP<-TRUE}
           } else
           # Ingen dataanalyse
           {
             if (LR.always)
-              OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,NA,NA,NA,NA,NA,'None','Data error','None',NA,NA,NA,NA,NA,NA,NA,'Data error'))
+              OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,NA,NA,NA,NA,NA,'None','Data error','None',NA,NA,NA,NA,NA,NA,NA,'Data error',NA,NA,NA,NA))
             else
-              OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,NA,NA,NA,NA,NA,'None','Data error','None',NA,NA))
+              OUTPUT<-rbind(OUTPUT,c(HMRdata[[i]]$serie,NA,NA,NA,NA,NA,'None','Data error','None',NA,NA,NA,NA,NA,NA))
           }
         }
         # Reset 'par'
@@ -259,7 +259,7 @@ HMR<-function(filename,series=NA,dec='.',sep=';',SatPct=NA,SatTimeMin=NA,pfvar=N
     oldOutDec<-getOption('OutDec'); options(OutDec=dec)
     OUTPUT<-OUTPUT[-1,]
     rownames(OUTPUT)<-paste(1:dim(OUTPUT)[1],sep='')
-    write.table(x=OUTPUT,file=paste('HMR - ',filename,sep=''),append=FALSE,quote=FALSE,dec=dec,sep=sep,row.names=FALSE,col.names=TRUE)
+    write.table(x=OUTPUT,file=paste('HMR - ',basename(filename),sep=''),append=FALSE,quote=FALSE,dec=dec,sep=sep,row.names=FALSE,col.names=TRUE)
     options(OutDec=oldOutDec)
     if (FollowHMR) {cat(sep='\n'); flush.console()}
     OUTPUT
