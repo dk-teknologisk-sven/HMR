@@ -1,7 +1,6 @@
 FROM rocker/r-bspm:20.04 as base
 
 RUN Rscript -e "install.packages('Plumber', Ncpus=2)"
-RUN Rscript -e "install.packages('dplyr', Ncpus=2)"
 
 COPY ./R /app/R
 COPY ./DESCRIPTION /app
