@@ -26,7 +26,7 @@ SPEC$paths$`/calculate`$post$responses$'200'$content$'application/json'$schema$i
 SPEC$paths$`/calculate`$post$responses$'200'$description = "OK"
 
 SPEC$components$schemas$ConcentrationMeasurement$type = "object"
-SPEC$components$schemas$ConcentrationMeasurement$required = c("SeriesIdentifier","GasConcentration","ChamberVolume","ChamberArea","DeploymentTime")
+SPEC$components$schemas$ConcentrationMeasurement$required = list("SeriesIdentifier","GasConcentration","ChamberVolume","ChamberArea","DeploymentTime")
 
 SPEC$components$schemas$ConcentrationMeasurement$properties$SeriesIdentifier$type = "string"
 
@@ -43,12 +43,12 @@ SPEC$components$schemas$ConcentrationMeasurement$properties$DeploymentTime$type 
 SPEC$components$schemas$ConcentrationMeasurement$properties$DeploymentTime$format = "double"
 
 SPEC$components$schemas$CalculateResponse$type = "object"
-SPEC$components$schemas$CalculateResponse$required = c("SeriesIdentifier","SuggestedMethod")
+SPEC$components$schemas$CalculateResponse$required = list("SeriesIdentifier","SuggestedMethod")
 
 SPEC$components$schemas$CalculateResponse$properties$SeriesIdentifier$type = "string"
 
 SPEC$components$schemas$CalculateResponse$properties$SuggestedMethod$type = "string"
-SPEC$components$schemas$CalculateResponse$properties$SuggestedMethod$enum = c("Linear","HMR","NoFlux")
+SPEC$components$schemas$CalculateResponse$properties$SuggestedMethod$enum = list("Linear","HMR","NoFlux")
 SPEC$components$schemas$CalculateResponse$properties$SuggestedMethod$`x-ms-enum`$name = "FluxMethod"
 SPEC$components$schemas$CalculateResponse$properties$SuggestedMethod$`x-ms-enum`$modelAsString = FALSE
 SPEC$components$schemas$CalculateResponse$properties$LinearResult$`$ref` = "#/components/schemas/LinearResultModel"
@@ -58,21 +58,17 @@ SPEC$components$schemas$CalculateResponse$properties$HMRResult$`$ref` = "#/compo
 SPEC$components$schemas$CalculateResponse$properties$Warning$type = "string"
 
 SPEC$components$schemas$ResultModelBase$type = "object"
-SPEC$components$schemas$ResultModelBase$required = c("FluxValue","FluxStandardError","FluxPValue","FluxLower95","FluxUppoer95")
+SPEC$components$schemas$ResultModelBase$required = list("FluxValue","FluxStandardError","FluxPValue","FluxLower95","FluxUppoer95")
 SPEC$components$schemas$ResultModelBase$properties$FluxValue$type = "number"
 SPEC$components$schemas$ResultModelBase$properties$FluxValue$format = "double"
 SPEC$components$schemas$ResultModelBase$properties$FluxStandardError$type = "number"
 SPEC$components$schemas$ResultModelBase$properties$FluxStandardError$format = "double"
-SPEC$components$schemas$ResultModelBase$properties$FluxStandardError$nullable = TRUE
 SPEC$components$schemas$ResultModelBase$properties$FluxPValue$type = "number"
 SPEC$components$schemas$ResultModelBase$properties$FluxPValue$format = "double"
-SPEC$components$schemas$ResultModelBase$properties$FluxPValue$nullable = TRUE
 SPEC$components$schemas$ResultModelBase$properties$FluxLower95$type = "number"
 SPEC$components$schemas$ResultModelBase$properties$FluxLower95$format = "double"
-SPEC$components$schemas$ResultModelBase$properties$FluxLower95$nullable = TRUE
 SPEC$components$schemas$ResultModelBase$properties$FluxUppoer95$type = "number"
 SPEC$components$schemas$ResultModelBase$properties$FluxUppoer95$format = "double"
-SPEC$components$schemas$ResultModelBase$properties$FluxUppoer95$nullable = TRUE
 
 resultmodelbaseref = list(`$ref` = "#/components/schemas/ResultModelBase")
 
